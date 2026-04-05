@@ -138,7 +138,7 @@ input, textarea, select {
   }
 
   .sidebar-link {
-    @apply flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
+    @apply flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 overflow-hidden whitespace-nowrap;
   }
   .sidebar-link-active {
     @apply bg-[#0071e3] text-white;
