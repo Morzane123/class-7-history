@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import Avatar from "./Avatar";
 
 interface User {
   id: string;
@@ -70,18 +71,12 @@ export default function Navigation() {
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="flex items-center gap-2 text-white text-xs"
               >
-                {user.avatar ? (
-                  <img src={user.avatar} alt={user.nickname} className="w-6 h-6 rounded-full" />
-                ) : (
-                  <div className="w-6 h-6 rounded-full bg-[#0071e3] flex items-center justify-center text-white text-xs">
-                    {user.nickname.charAt(0)}
-                  </div>
-                )}
+                <Avatar src={user.avatar} alt={user.nickname} size="sm" />
                 <span className="hidden sm:inline">{user.nickname}</span>
               </button>
 
               {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg py-2">
                   <Link
                     href="/profile"
                     className="block px-4 py-2 text-sm text-[#1d1d1f] hover:bg-[#f5f5f7]"

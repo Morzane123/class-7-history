@@ -140,20 +140,20 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
       <div className="flex gap-4 mb-8">
         <button
           onClick={() => setActiveTab("sections")}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+          className={`px-6 py-3 rounded-xl font-medium transition-colors ${
             activeTab === "sections"
-              ? "bg-app-blue text-white"
-              : "bg-white text-app-text hover:bg-gray-100"
+              ? "bg-[#0071e3] text-white"
+              : "bg-white text-[#1d1d1f] hover:bg-[#f5f5f7]"
           }`}
         >
           板块管理
         </button>
         <button
           onClick={() => setActiveTab("users")}
-          className={`px-6 py-3 rounded-lg font-medium transition-colors ${
+          className={`px-6 py-3 rounded-xl font-medium transition-colors ${
             activeTab === "users"
-              ? "bg-app-blue text-white"
-              : "bg-white text-app-text hover:bg-gray-100"
+              ? "bg-[#0071e3] text-white"
+              : "bg-white text-[#1d1d1f] hover:bg-[#f5f5f7]"
           }`}
         >
           用户管理
@@ -162,15 +162,15 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
 
       {activeTab === "sections" && (
         <div className="space-y-6">
-          <div className="bg-white rounded-xl p-6 shadow-card">
-            <h2 className="text-xl font-semibold text-app-text mb-4">添加新板块</h2>
+          <div className="bg-white rounded-2xl p-6 shadow-[rgba(0,0,0,0.08)_0px_2px_8px]">
+            <h2 className="text-xl font-semibold text-[#1d1d1f] mb-4">添加新板块</h2>
             <form onSubmit={handleCreateSection} className="flex gap-4">
               <input
                 type="text"
                 value={newSection.name}
                 onChange={(e) => setNewSection({ ...newSection, name: e.target.value })}
                 placeholder="板块名称"
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue"
+                className="input-field flex-1"
                 required
               />
               <input
@@ -178,28 +178,28 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                 value={newSection.description}
                 onChange={(e) => setNewSection({ ...newSection, description: e.target.value })}
                 placeholder="板块描述"
-                className="flex-1 px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue"
+                className="input-field flex-1"
               />
               <button
                 type="submit"
-                className="bg-app-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+                className="bg-[#0071e3] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#0062cc] transition-colors"
               >
                 添加
               </button>
             </form>
           </div>
 
-          <div className="bg-white rounded-xl shadow-card overflow-hidden">
+          <div className="bg-white rounded-2xl shadow-[rgba(0,0,0,0.08)_0px_2px_8px] overflow-hidden">
             <table className="w-full">
-              <thead className="bg-app-gray">
+              <thead className="bg-[#f5f5f7]">
                 <tr>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">名称</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">描述</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">排序</th>
-                  <th className="px-6 py-4 text-right text-sm font-semibold text-app-text">操作</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">名称</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">描述</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">排序</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#1d1d1f]">操作</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-[#d2d2d7]">
                 {sections.map((section) => (
                   <tr key={section.id}>
                     <td className="px-6 py-4">
@@ -208,10 +208,10 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                           type="text"
                           value={editingSection.name}
                           onChange={(e) => setEditingSection({ ...editingSection, name: e.target.value })}
-                          className="px-3 py-2 border border-gray-200 rounded-lg w-full"
+                          className="input-field"
                         />
                       ) : (
-                        <span className="text-app-text">{section.name}</span>
+                        <span className="text-[#1d1d1f]">{section.name}</span>
                       )}
                     </td>
                     <td className="px-6 py-4">
@@ -220,13 +220,13 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                           type="text"
                           value={editingSection.description || ""}
                           onChange={(e) => setEditingSection({ ...editingSection, description: e.target.value })}
-                          className="px-3 py-2 border border-gray-200 rounded-lg w-full"
+                          className="input-field"
                         />
                       ) : (
-                        <span className="text-gray-500">{section.description}</span>
+                        <span className="text-[#6e6e73]">{section.description}</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-gray-500">{section.sort_order}</td>
+                    <td className="px-6 py-4 text-[#6e6e73]">{section.sort_order}</td>
                     <td className="px-6 py-4 text-right">
                       {editingSection?.id === section.id ? (
                         <div className="flex justify-end gap-2">
@@ -238,7 +238,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                           </button>
                           <button
                             onClick={() => setEditingSection(null)}
-                            className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            className="px-4 py-2 bg-[#f5f5f7] text-[#1d1d1f] rounded-lg hover:bg-[#e8e8ed]"
                           >
                             取消
                           </button>
@@ -247,13 +247,13 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                         <div className="flex justify-end gap-2">
                           <button
                             onClick={() => setEditingSection(section)}
-                            className="px-4 py-2 text-app-blue hover:bg-blue-50 rounded-lg"
+                            className="px-4 py-2 text-[#0071e3] hover:bg-[#0071e3]/10 rounded-lg"
                           >
                             编辑
                           </button>
                           <button
                             onClick={() => handleDeleteSection(section.id)}
-                            className="px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                            className="px-4 py-2 text-[#ff3b30] hover:bg-[#ff3b30]/10 rounded-lg"
                           >
                             删除
                           </button>
@@ -269,33 +269,31 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
       )}
 
       {activeTab === "users" && (
-        <div className="bg-white rounded-xl shadow-card overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-[rgba(0,0,0,0.08)_0px_2px_8px] overflow-hidden">
           <table className="w-full">
-            <thead className="bg-app-gray">
+            <thead className="bg-[#f5f5f7]">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">用户</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">邮箱</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">权限</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-app-text">状态</th>
-                <th className="px-6 py-4 text-right text-sm font-semibold text-app-text">操作</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">用户</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">邮箱</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">权限</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">状态</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-[#1d1d1f]">操作</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody className="divide-y divide-[#d2d2d7]">
               {users.map((user) => (
                 <tr key={user.id}>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3">
-                      {user.avatar ? (
-                        <img src={user.avatar} alt="" className="w-8 h-8 rounded-full" />
-                      ) : (
-                        <div className="w-8 h-8 rounded-full bg-app-blue flex items-center justify-center text-white text-sm">
-                          {user.nickname.charAt(0)}
-                        </div>
-                      )}
-                      <span className="text-app-text">{user.nickname}</span>
+                      <img 
+                        src={user.avatar || "/default-avatar.png"} 
+                        alt="" 
+                        className="w-8 h-8 rounded-full object-cover" 
+                      />
+                      <span className="text-[#1d1d1f]">{user.nickname}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-gray-500">{user.email}</td>
+                  <td className="px-6 py-4 text-[#6e6e73]">{user.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${
                       user.role === 3 ? "bg-purple-100 text-purple-700" :
@@ -317,7 +315,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                       <select
                         value={user.role}
                         onChange={(e) => handleUpdateUserRole(user.id, parseInt(e.target.value))}
-                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm"
+                        className="px-3 py-2 border border-[#d2d2d7] rounded-lg text-sm bg-white"
                       >
                         <option value={1}>普通用户</option>
                         <option value={2}>管理员</option>
@@ -327,7 +325,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                     {currentUserRole >= 2 && user.role < currentUserRole && (
                       <button
                         onClick={() => handleDeleteUser(user.id)}
-                        className="ml-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg"
+                        className="ml-2 px-4 py-2 text-[#ff3b30] hover:bg-[#ff3b30]/10 rounded-lg"
                       >
                         删除
                       </button>

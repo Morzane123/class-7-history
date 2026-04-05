@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/Navigation";
+import Avatar from "@/components/Avatar";
 
 interface User {
   id: string;
@@ -105,25 +106,25 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-app-gray flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-app-blue border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#f5f5f7] flex items-center justify-center">
+        <div className="w-8 h-8 border-4 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-app-gray">
+    <div className="min-h-screen bg-[#f5f5f7]">
       <Navigation />
       <main className="pt-16">
-        <div className="max-w-2xl mx-auto px-8 py-12">
-          <h1 className="text-4xl font-semibold text-app-text mb-8">
+        <div className="max-w-2xl mx-auto px-4 md:px-8 py-8 md:py-12">
+          <h1 className="text-3xl md:text-4xl font-semibold text-[#1d1d1f] mb-8">
             个人中心
           </h1>
 
-          <form onSubmit={handleSubmit} className="bg-white rounded-xl p-8 shadow-card">
+          <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-6 md:p-8 shadow-[rgba(0,0,0,0.08)_0px_2px_8px]">
             {message && (
-              <div className={`mb-6 p-4 rounded-lg ${
-                message.includes("成功") ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
+              <div className={`mb-6 p-4 rounded-xl ${
+                message.includes("成功") ? "bg-green-50 text-green-600" : "bg-red-50 text-[#ff3b30]"
               }`}>
                 {message}
               </div>
@@ -132,14 +133,8 @@ export default function ProfilePage() {
             <div className="space-y-6">
               <div className="flex items-center gap-6">
                 <div className="relative">
-                  {avatarPreview ? (
-                    <img src={avatarPreview} alt="" className="w-24 h-24 rounded-full object-cover" />
-                  ) : (
-                    <div className="w-24 h-24 rounded-full bg-app-blue flex items-center justify-center text-white text-3xl">
-                      {nickname.charAt(0)}
-                    </div>
-                  )}
-                  <label className="absolute bottom-0 right-0 w-8 h-8 bg-app-blue rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
+                  <Avatar src={avatarPreview} alt={nickname} size="xl" />
+                  <label className="absolute bottom-0 right-0 w-8 h-8 bg-[#0071e3] rounded-full flex items-center justify-center cursor-pointer hover:bg-[#0062cc] transition-colors">
                     <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -153,38 +148,38 @@ export default function ProfilePage() {
                   </label>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">点击更换头像</p>
-                  <p className="text-xs text-gray-400 mt-1">支持 JPG、PNG，最大 5MB</p>
+                  <p className="text-sm text-[#6e6e73]">点击更换头像</p>
+                  <p className="text-xs text-[#86868b] mt-1">支持 JPG、PNG，最大 5MB</p>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-app-text mb-2">
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
                   昵称
                 </label>
                 <input
                   type="text"
                   value={nickname}
                   onChange={(e) => setNickname(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent"
+                  className="input-field"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-app-text mb-2">
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
                   邮箱
                 </label>
                 <input
                   type="email"
                   value={user?.email || ""}
                   disabled
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+                  className="input-field bg-[#f5f5f7] text-[#6e6e73] cursor-not-allowed"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-app-text mb-2">
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
                   权限等级
                 </label>
                 <input
@@ -194,7 +189,7 @@ export default function ProfilePage() {
                     user?.role === 2 ? "管理员" : "普通用户"
                   }
                   disabled
-                  className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 text-gray-500"
+                  className="input-field bg-[#f5f5f7] text-[#6e6e73] cursor-not-allowed"
                 />
               </div>
             </div>
@@ -202,7 +197,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={saving}
-              className="w-full mt-8 bg-app-blue text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+              className="w-full mt-8 bg-[#0071e3] text-white py-3 rounded-xl font-medium hover:bg-[#0062cc] transition-colors disabled:bg-[#d2d2d7] disabled:cursor-not-allowed"
             >
               {saving ? "保存中..." : "保存修改"}
             </button>
