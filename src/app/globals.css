@@ -30,6 +30,15 @@ a {
   text-decoration: none;
 }
 
+button {
+  cursor: pointer;
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
@@ -46,4 +55,34 @@ a {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #6e6e73;
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-app-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply px-6 py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors;
+  }
+
+  .btn-outline-blue {
+    @apply px-4 py-2 text-app-blue border border-app-blue rounded-lg hover:bg-app-blue hover:text-white transition-colors;
+  }
+
+  .btn-outline-red {
+    @apply px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors;
+  }
+
+  .btn-gray {
+    @apply px-4 py-2 bg-app-gray text-app-text rounded-lg hover:bg-gray-200 transition-colors;
+  }
+
+  .input-field {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent;
+  }
+
+  .card {
+    @apply bg-white rounded-xl p-6 shadow-card;
+  }
 }

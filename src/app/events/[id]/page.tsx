@@ -3,6 +3,7 @@ import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
 import { getEventById, getSections } from "@/lib/db";
 import EventActions from "./EventActions";
+import EventImages from "./EventImages";
 
 interface EventDetailPageProps {
   params: Promise<{ id: string }>;
@@ -65,18 +66,7 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
                 ))}
               </div>
 
-              {event.images && event.images.length > 0 && (
-                <div className="mt-8 grid grid-cols-2 gap-4">
-                  {event.images.map((image) => (
-                    <img
-                      key={image.id}
-                      src={image.image_path}
-                      alt=""
-                      className="rounded-lg w-full h-48 object-cover"
-                    />
-                  ))}
-                </div>
-              )}
+              <EventImages event={event} />
             </div>
           </article>
         </main>

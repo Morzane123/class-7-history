@@ -2,6 +2,8 @@ import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
 import { getSections } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export default async function Home() {
   const sections = await getSections();
   

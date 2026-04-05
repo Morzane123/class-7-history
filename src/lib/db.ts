@@ -1,5 +1,6 @@
 import Database from "better-sqlite3";
 import { join } from "path";
+import { hashSync } from "bcryptjs";
 
 const dbPath = join(process.cwd(), "data", "class7history.db");
 
@@ -74,6 +75,15 @@ function initDatabase(db: Database.Database) {
     insertSection.run("internal", "内政", "班级内部事务与管理", 1);
     insertSection.run("diplomacy", "外交", "班级对外交流与活动", 2);
     insertSection.run("livelihood", "民生", "班级日常生活与趣事", 3);
+  }
+
+  const usersCount = db.prepare("SELECT COUNT(*) as count FROM users").get() as { count: number };
+  if (usersCount.count === 0) {
+    const hashedPassword = hashSync("admin123456", 10);
+    const insertUser = db.prepare(
+      "INSERT INTO users (id, email, password, nickname, role, email_verified) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    insertUser.run("admin-super", "admin@class7history.local", hashedPassword, "超级管理员", 3, 1);
   }
 }
 
