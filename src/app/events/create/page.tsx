@@ -24,6 +24,7 @@ export default function CreateEventPage() {
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [userRole, setUserRole] = useState<number | null>(null);
 
   const [formData, setFormData] = useState({
     section_id: "",
@@ -42,6 +43,12 @@ export default function CreateEventPage() {
       .then(([sectionsData, authData]) => {
         if (!authData.user) {
           router.push("/auth/login");
+          return;
+        }
+        
+        setUserRole(authData.user.role);
+        
+        if (authData.user.role < 1) {
           return;
         }
         
@@ -92,6 +99,31 @@ export default function CreateEventPage() {
       setLoading(false);
     }
   };
+
+  if (userRole !== null && userRole < 1) {
+    return (
+      <div className="min-h-screen bg-[#f5f5f7]">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-[#ff3b30]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-[#ff3b30]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-semibold text-[#1d1d1f] mb-2">无权限</h2>
+            <p className="text-[#6e6e73] mb-6">访客用户无权创建事件，只能发表评论</p>
+            <button
+              onClick={() => router.push("/timeline")}
+              className="btn-primary"
+            >
+              返回时间线
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#f5f5f7]">

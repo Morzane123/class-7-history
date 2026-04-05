@@ -270,10 +270,11 @@ export async function createUser(data: {
   class_name?: string;
 }): Promise<User> {
   const db = getDb();
+  const isClass7Value = data.is_class7 !== undefined ? data.is_class7 : 1;
   db.prepare(`
     INSERT INTO users (id, email, password, nickname, verification_token, is_class7, class_name)
     VALUES (?, ?, ?, ?, ?, ?, ?)
-  `).run(data.id, data.email, data.password, data.nickname, data.verificationToken, data.is_class7 || 1, data.class_name || null);
+  `).run(data.id, data.email, data.password, data.nickname, data.verificationToken, isClass7Value, data.class_name || null);
   
   return getUserById(data.id) as Promise<User>;
 }

@@ -13,6 +13,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (user.role < 1) {
+      return NextResponse.json(
+        { error: "访客用户无权创建事件" },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { section_id, title, content, event_date } = body;
 

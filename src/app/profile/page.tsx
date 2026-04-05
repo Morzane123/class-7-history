@@ -186,7 +186,8 @@ export default function ProfilePage() {
                   type="text"
                   value={
                     user?.role === 3 ? "超级管理员" :
-                    user?.role === 2 ? "管理员" : "普通用户"
+                    user?.role === 2 ? "管理员" :
+                    user?.role === 1 ? "普通用户" : "访客"
                   }
                   disabled
                   className="input-field bg-[#f5f5f7] text-[#6e6e73] cursor-not-allowed"
