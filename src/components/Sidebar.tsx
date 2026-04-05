@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 
 interface Section {
   id: string;
@@ -12,31 +12,53 @@ interface Section {
 
 interface SidebarProps {
   sections: Section[];
-  collapsed?: boolean;
-  onToggle?: () => void;
 }
 
-export default function Sidebar({ sections, collapsed: externalCollapsed, onToggle }: SidebarProps) {
+function SidebarContent({ sections }: SidebarProps) {
   const pathname = usePathname();
-  const [internalCollapsed, setInternalCollapsed] = useState(false);
-  const collapsed = externalCollapsed ?? internalCollapsed;
+  const searchParams = useSearchParams();
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
-  const handleToggle = () => {
-    if (onToggle) {
-      onToggle();
-    } else {
-      setInternalCollapsed(!internalCollapsed);
+  const currentSection = searchParams.get("section");
+
+  const isActive = (sectionId?: string) => {
+    if (!sectionId) {
+      return pathname === "/timeline" && !currentSection;
     }
+    return pathname === "/timeline" && currentSection === sectionId;
   };
+
+  const toggleSidebar = () => {
+    setCollapsed(!collapsed);
+  };
+
+  const toggleMobile = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const closeMobile = () => {
+    setMobileOpen(false);
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth >= 768) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   return (
     <>
       <aside
-        className={`fixed left-0 top-12 h-[calc(100vh-48px)] bg-white border-r border-[#d2d2d7] overflow-y-auto transition-all duration-300 z-40 
-          ${collapsed ? "w-16" : "w-64"}
-          max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:top-0 max-md:z-50 max-md:h-full
+        className={`fixed left-0 top-12 h-[calc(100vh-48px)] bg-white/80 backdrop-blur-xl border-r border-[#d2d2d7]/50 overflow-y-auto transition-all duration-300 z-40 
+          ${collapsed ? "w-20" : "w-64"}
+          max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:top-0 max-md:z-50 max-md:h-full max-md:w-64
           max-md:transform max-md:transition-transform max-md:duration-300
-          ${collapsed ? "max-md:-translate-x-full" : "max-md:translate-x-0"}
+          ${mobileOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full"}
         `}
       >
         <div className="p-4">
@@ -47,8 +69,8 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
               </h2>
             )}
             <button
-              onClick={handleToggle}
-              className="p-2 rounded-lg hover:bg-[#f5f5f7] transition-colors text-[#1d1d1f] ml-auto"
+              onClick={toggleSidebar}
+              className="p-2 rounded-lg hover:bg-[#f5f5f7] transition-colors text-[#1d1d1f] ml-auto hidden md:flex"
               title={collapsed ? "展开侧边栏" : "收起侧边栏"}
             >
               <svg
@@ -60,12 +82,21 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
               </svg>
             </button>
+            <button
+              onClick={closeMobile}
+              className="p-2 rounded-lg hover:bg-[#f5f5f7] transition-colors text-[#1d1d1f] md:hidden"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
           <nav className="space-y-1">
             <Link
               href="/timeline"
+              onClick={closeMobile}
               className={`sidebar-link ${
-                pathname === "/timeline" ? "sidebar-link-active" : "sidebar-link-inactive"
+                isActive() ? "sidebar-link-active" : "sidebar-link-inactive"
               }`}
             >
               <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,8 +108,9 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
               <Link
                 key={section.id}
                 href={`/timeline?section=${section.id}`}
+                onClick={closeMobile}
                 className={`sidebar-link ${
-                  pathname.includes(`section=${section.id}`) ? "sidebar-link-active" : "sidebar-link-inactive"
+                  isActive(section.id) ? "sidebar-link-active" : "sidebar-link-inactive"
                 }`}
               >
                 <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -90,7 +122,7 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
           </nav>
         </div>
 
-        <div className="p-4 border-t border-[#d2d2d7]">
+        <div className="p-4 border-t border-[#d2d2d7]/50">
           {!collapsed && (
             <h2 className="text-sm font-semibold text-[#6e6e73] uppercase tracking-wider mb-4">
               快捷操作
@@ -99,6 +131,7 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
           <nav className="space-y-1">
             <Link
               href="/events/create"
+              onClick={closeMobile}
               className="sidebar-link sidebar-link-inactive"
             >
               <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,6 +141,7 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
             </Link>
             <Link
               href="/search"
+              onClick={closeMobile}
               className="sidebar-link sidebar-link-inactive"
             >
               <svg className="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -119,12 +153,31 @@ export default function Sidebar({ sections, collapsed: externalCollapsed, onTogg
         </div>
       </aside>
 
-      {collapsed && (
+      {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/20 z-30 max-md:hidden"
-          onClick={handleToggle}
+          className="fixed inset-0 bg-black/30 z-30 md:hidden"
+          onClick={closeMobile}
         />
       )}
+
+      <button
+        onClick={toggleMobile}
+        className="fixed bottom-4 left-4 z-50 p-3 bg-white/80 backdrop-blur-xl rounded-full shadow-lg md:hidden"
+      >
+        <svg className="w-6 h-6 text-[#1d1d1f]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
     </>
+  );
+}
+
+export default function Sidebar(props: SidebarProps) {
+  return (
+    <Suspense fallback={
+      <aside className="fixed left-0 top-12 h-[calc(100vh-48px)] w-64 bg-white border-r border-[#d2d2d7] z-40" />
+    }>
+      <SidebarContent {...props} />
+    </Suspense>
   );
 }

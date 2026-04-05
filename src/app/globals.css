@@ -124,7 +124,7 @@ input, textarea, select {
   }
 
   .card {
-    @apply bg-white rounded-xl p-6 shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px];
+    @apply bg-white rounded-xl p-6 shadow-[rgba(0,0,0,0.08)_0px_2px_8px];
   }
 
   .badge {
