@@ -7,7 +7,7 @@ export interface Question {
 export const class7Questions: Question[] = [
   {
     id: "q1",
-    question: "七班头发最少的人的名字简写（**简写两个字**）是什么？",
+    question: "七班头发最少的人的名字缩写（**加粗**）是什么？",
     answer: "kwy"
   },
   {
@@ -27,7 +27,7 @@ export const class7Questions: Question[] = [
   },
   {
     id: "q5",
-    question: "鸡飞狗跳组合的名字简写（**简写两个字**），空格隔开",
+    question: "鸡飞狗跳组合的名字缩写（**加粗**），空格隔开",
     answer: "mhx hwm"
   }
 ];

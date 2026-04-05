@@ -32,6 +32,7 @@ export default function RegisterPage() {
   }, [identityType]);
 
   const fetchQuestion = async () => {
+    setAnswer("");
     setQuestionLoading(true);
     try {
       const res = await fetch("/api/questions/random");
