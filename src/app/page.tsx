@@ -1,6 +1,6 @@
 import Navigation from "@/components/Navigation";
-import Sidebar from "@/components/Sidebar";
 import HomeBackground from "@/components/HomeBackground";
+import LayoutClient from "@/components/LayoutClient";
 import { getSections } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +13,7 @@ export default async function Home() {
       <HomeBackground />
       <Navigation />
       <div className="flex relative z-10">
-        <Sidebar sections={sections} />
-        <main className="flex-1 ml-0 md:ml-64 pt-16 min-h-screen">
+        <LayoutClient sections={sections}>
           <div className="max-w-5xl mx-auto px-4 md:px-8 py-8 md:py-16">
             <div className="text-center mb-16">
               <div className="inline-block mb-6">
@@ -99,7 +98,7 @@ export default async function Home() {
               </p>
             </div>
           </div>
-        </main>
+        </LayoutClient>
       </div>
     </div>
   );

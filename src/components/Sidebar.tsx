@@ -12,9 +12,10 @@ interface Section {
 
 interface SidebarProps {
   sections: Section[];
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
-function SidebarContent({ sections }: SidebarProps) {
+function SidebarContent({ sections, onCollapseChange }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [collapsed, setCollapsed] = useState(false);
@@ -30,7 +31,9 @@ function SidebarContent({ sections }: SidebarProps) {
   };
 
   const toggleSidebar = () => {
-    setCollapsed(!collapsed);
+    const newState = !collapsed;
+    setCollapsed(newState);
+    onCollapseChange?.(newState);
   };
 
   const toggleMobile = () => {
@@ -40,6 +43,10 @@ function SidebarContent({ sections }: SidebarProps) {
   const closeMobile = () => {
     setMobileOpen(false);
   };
+
+  useEffect(() => {
+    onCollapseChange?.(collapsed);
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {

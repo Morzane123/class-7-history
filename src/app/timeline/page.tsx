@@ -1,5 +1,5 @@
 import Navigation from "@/components/Navigation";
-import Sidebar from "@/components/Sidebar";
+import LayoutClient from "@/components/LayoutClient";
 import { getSections, getEvents } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -40,8 +40,7 @@ export default async function TimelinePage({
     <div className="min-h-screen bg-[#f5f5f7]">
       <Navigation />
       <div className="flex">
-        <Sidebar sections={sections} />
-        <main className="flex-1 ml-0 md:ml-64 pt-16">
+        <LayoutClient sections={sections}>
           <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
             <h1 className="text-3xl md:text-4xl font-semibold text-[#1d1d1f] mb-8">
               时间线
@@ -106,7 +105,7 @@ export default async function TimelinePage({
               </div>
             )}
           </div>
-        </main>
+        </LayoutClient>
       </div>
     </div>
   );
