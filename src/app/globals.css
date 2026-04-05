@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --sk-focus-color: #0071e3;
-  --sk-body-link-color: #0066cc;
+  --color-primary: #0071e3;
+  --color-primary-hover: #0062cc;
+  --color-text: #1d1d1f;
+  --color-text-secondary: #6e6e73;
+  --color-text-tertiary: #86868b;
+  --color-background: #f5f5f7;
+  --color-surface: #ffffff;
+  --color-border: #d2d2d7;
+  --color-danger: #ff3b30;
+  --color-success: #34c759;
 }
 
 * {
@@ -17,12 +25,14 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  font-family: "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Icons", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-background);
+  color: var(--color-text);
 }
 
 a {
@@ -33,6 +43,8 @@ a {
 button {
   cursor: pointer;
   font-family: inherit;
+  border: none;
+  background: none;
 }
 
 input, textarea, select {
@@ -59,30 +71,92 @@ input, textarea, select {
 
 @layer components {
   .btn-primary {
-    @apply bg-app-blue text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50;
+    @apply inline-flex items-center justify-center px-6 py-3 bg-[#0071e3] text-white rounded-lg font-medium transition-all duration-200;
+  }
+  .btn-primary:hover {
+    background-color: #0062cc;
+  }
+  .btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors;
+    @apply inline-flex items-center justify-center px-6 py-3 bg-white border border-[#d2d2d7] text-[#1d1d1f] rounded-lg font-medium transition-all duration-200;
+  }
+  .btn-secondary:hover {
+    background-color: #f5f5f7;
   }
 
-  .btn-outline-blue {
-    @apply px-4 py-2 text-app-blue border border-app-blue rounded-lg hover:bg-app-blue hover:text-white transition-colors;
+  .btn-outline {
+    @apply inline-flex items-center justify-center px-4 py-2 border-2 border-[#0071e3] text-[#0071e3] rounded-lg font-medium transition-all duration-200;
+  }
+  .btn-outline:hover {
+    background-color: #0071e3;
+    color: white;
   }
 
-  .btn-outline-red {
-    @apply px-4 py-2 text-red-600 border border-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors;
+  .btn-danger {
+    @apply inline-flex items-center justify-center px-4 py-2 border-2 border-[#ff3b30] text-[#ff3b30] rounded-lg font-medium transition-all duration-200;
+  }
+  .btn-danger:hover {
+    background-color: #ff3b30;
+    color: white;
   }
 
-  .btn-gray {
-    @apply px-4 py-2 bg-app-gray text-app-text rounded-lg hover:bg-gray-200 transition-colors;
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-4 py-2 bg-[#f5f5f7] text-[#1d1d1f] rounded-lg font-medium transition-all duration-200;
+  }
+  .btn-ghost:hover {
+    background-color: #e8e8ed;
   }
 
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent;
+    @apply w-full px-4 py-3 bg-white border border-[#d2d2d7] rounded-lg text-[#1d1d1f] transition-all duration-200;
+  }
+  .input-field:focus {
+    outline: none;
+    border-color: #0071e3;
+    box-shadow: 0 0 0 3px rgba(0, 113, 227, 0.1);
+  }
+  .input-field::placeholder {
+    color: #86868b;
   }
 
   .card {
-    @apply bg-white rounded-xl p-6 shadow-card;
+    @apply bg-white rounded-xl p-6 shadow-[rgba(0,0,0,0.22)_3px_5px_30px_0px];
+  }
+
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-medium;
+  }
+  .badge-primary {
+    @apply bg-[#0071e3] text-white;
+  }
+  .badge-secondary {
+    @apply bg-[#f5f5f7] text-[#1d1d1f];
+  }
+
+  .sidebar-link {
+    @apply flex items-center px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200;
+  }
+  .sidebar-link-active {
+    @apply bg-[#0071e3] text-white;
+  }
+  .sidebar-link-inactive {
+    @apply text-[#1d1d1f] hover:bg-[#f5f5f7];
+  }
+
+  .timeline-badge {
+    @apply inline-flex items-center px-4 py-2 rounded-lg bg-[#1d1d1f] text-white;
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar-mobile-hidden {
+    transform: translateX(-100%);
+  }
+  .sidebar-mobile-visible {
+    transform: translateX(0);
   }
 }

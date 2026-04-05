@@ -4,11 +4,19 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
+import RichTextEditor from "./RichTextEditor";
+import ImageUploader from "./ImageUploader";
 
 interface Section {
   id: string;
   name: string;
   description: string | null;
+}
+
+interface UploadedImage {
+  id: string;
+  file: File;
+  preview: string;
 }
 
 export default function CreateEventPage() {
@@ -24,27 +32,25 @@ export default function CreateEventPage() {
     event_date: "",
   });
 
-  useEffect(() => {
-    fetch("/api/sections")
-      .then((res) => res.json())
-      .then((data) => {
-        setSections(data.sections);
-        if (data.sections.length > 0) {
-          setFormData((prev) => ({ ...prev, section_id: data.sections[0].id }));
-        }
-      })
-      .catch(() => {});
+  const [images, setImages] = useState<UploadedImage[]>([]);
 
-    fetch("/api/auth/me")
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.user) {
+  useEffect(() => {
+    Promise.all([
+      fetch("/api/sections").then((res) => res.json()),
+      fetch("/api/auth/me").then((res) => res.json()),
+    ])
+      .then(([sectionsData, authData]) => {
+        if (!authData.user) {
           router.push("/auth/login");
+          return;
+        }
+        
+        setSections(sectionsData.sections || []);
+        if (sectionsData.sections?.length > 0) {
+          setFormData((prev) => ({ ...prev, section_id: sectionsData.sections[0].id }));
         }
       })
-      .catch(() => {
-        router.push("/auth/login");
-      });
+      .catch(() => router.push("/auth/login"));
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,107 +69,127 @@ export default function CreateEventPage() {
 
       if (!res.ok) {
         setError(data.error || "创建失败");
+        setLoading(false);
         return;
+      }
+
+      if (images.length > 0) {
+        for (const image of images) {
+          const imgFormData = new FormData();
+          imgFormData.append("image", image.file);
+          imgFormData.append("eventId", data.event.id);
+          
+          await fetch("/api/events/images", {
+            method: "POST",
+            body: imgFormData,
+          });
+        }
       }
 
       router.push(`/events/${data.event.id}`);
     } catch {
       setError("创建失败，请稍后重试");
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-app-gray">
+    <div className="min-h-screen bg-[#f5f5f7]">
       <Navigation />
       <div className="flex">
         <Sidebar sections={sections} />
-        <main className="flex-1 ml-64 pt-16">
-          <div className="max-w-4xl mx-auto px-8 py-12">
-            <h1 className="text-4xl font-semibold text-app-text mb-8">
+        <main className="flex-1 ml-0 md:ml-64 pt-16">
+          <div className="max-w-4xl mx-auto px-4 md:px-8 py-8 md:py-12">
+            <h1 className="text-3xl md:text-4xl font-semibold text-[#1d1d1f] mb-8">
               记录新事件
             </h1>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-xl p-8 shadow-card">
-              {error && (
-                <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-lg">
-                  {error}
-                </div>
-              )}
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="card">
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 text-[#ff3b30] rounded-lg">
+                    {error}
+                  </div>
+                )}
 
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-app-text mb-2">
-                    所属板块
-                  </label>
-                  <select
-                    value={formData.section_id}
-                    onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent"
-                    required
-                  >
-                    {sections.map((section) => (
-                      <option key={section.id} value={section.id}>
-                        {section.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                      所属板块
+                    </label>
+                    <select
+                      value={formData.section_id}
+                      onChange={(e) => setFormData({ ...formData, section_id: e.target.value })}
+                      className="input-field"
+                      required
+                    >
+                      {sections.map((section) => (
+                        <option key={section.id} value={section.id}>
+                          {section.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-app-text mb-2">
-                    事件名称
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent"
-                    placeholder="请输入事件名称"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                      事件名称
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.title}
+                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      className="input-field"
+                      placeholder="请输入事件名称"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-app-text mb-2">
-                    事件发生时间
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.event_date}
-                    onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent"
-                    required
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                      事件发生时间
+                    </label>
+                    <input
+                      type="date"
+                      value={formData.event_date}
+                      onChange={(e) => setFormData({ ...formData, event_date: e.target.value })}
+                      className="input-field"
+                      required
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-app-text mb-2">
-                    事件内容
-                  </label>
-                  <textarea
-                    value={formData.content}
-                    onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-app-blue focus:border-transparent min-h-[200px] resize-y"
-                    placeholder="请详细描述事件内容..."
-                    required
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                      事件内容
+                    </label>
+                    <RichTextEditor
+                      value={formData.content}
+                      onChange={(value) => setFormData({ ...formData, content: value })}
+                      placeholder="请详细描述事件内容..."
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                      上传图片
+                    </label>
+                    <ImageUploader images={images} setImages={setImages} />
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 mt-8">
+              <div className="flex items-center gap-4">
                 <button
                   type="submit"
                   disabled={loading}
-                  className="bg-app-blue text-white px-8 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:opacity-50"
+                  className="btn-primary"
                 >
                   {loading ? "提交中..." : "提交"}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.back()}
-                  className="px-8 py-3 border border-gray-300 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors"
+                  className="btn-secondary"
                 >
                   取消
                 </button>

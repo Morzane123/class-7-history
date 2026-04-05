@@ -13,6 +13,7 @@ interface User {
 export default function Navigation() {
   const [user, setUser] = useState<User | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -32,10 +33,21 @@ export default function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 h-12 bg-black/80 backdrop-blur-xl z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2">
-          <img src="/校徽.png" alt="校徽" className="h-7 w-7 object-contain" />
-          <span className="text-white text-sm font-medium">7班班史</span>
-        </Link>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="p-2 text-white md:hidden"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          
+          <Link href="/" className="flex items-center gap-2">
+            <img src="/校徽.png" alt="校徽" className="h-7 w-7 object-contain" />
+            <span className="text-white text-sm font-medium hidden sm:inline">7班班史</span>
+          </Link>
+        </div>
 
         <div className="hidden md:flex items-center gap-6">
           <Link href="/timeline" className="text-white/80 text-xs hover:text-white transition-colors">
@@ -61,7 +73,7 @@ export default function Navigation() {
                 {user.avatar ? (
                   <img src={user.avatar} alt={user.nickname} className="w-6 h-6 rounded-full" />
                 ) : (
-                  <div className="w-6 h-6 rounded-full bg-app-blue flex items-center justify-center text-white text-xs">
+                  <div className="w-6 h-6 rounded-full bg-[#0071e3] flex items-center justify-center text-white text-xs">
                     {user.nickname.charAt(0)}
                   </div>
                 )}
@@ -69,17 +81,17 @@ export default function Navigation() {
               </button>
 
               {isMenuOpen && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-card py-2">
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg py-2">
                   <Link
                     href="/profile"
-                    className="block px-4 py-2 text-sm text-app-text hover:bg-app-gray"
+                    className="block px-4 py-2 text-sm text-[#1d1d1f] hover:bg-[#f5f5f7]"
                     onClick={() => setIsMenuOpen(false)}
                   >
                     个人中心
                   </Link>
                   <button
                     onClick={handleLogout}
-                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-app-gray"
+                    className="w-full text-left px-4 py-2 text-sm text-[#ff3b30] hover:bg-[#f5f5f7]"
                   >
                     退出登录
                   </button>
@@ -96,7 +108,7 @@ export default function Navigation() {
               </Link>
               <Link
                 href="/auth/register"
-                className="bg-app-blue text-white text-xs px-4 py-1.5 rounded-full hover:bg-blue-600 transition-colors"
+                className="bg-[#0071e3] text-white text-xs px-4 py-1.5 rounded-full hover:bg-[#0062cc] transition-colors"
               >
                 注册
               </Link>
@@ -104,6 +116,36 @@ export default function Navigation() {
           )}
         </div>
       </div>
+
+      {isMobileMenuOpen && (
+        <div className="md:hidden bg-black/95 backdrop-blur-xl border-t border-white/10">
+          <div className="px-4 py-4 space-y-3">
+            <Link
+              href="/timeline"
+              className="block text-white/80 text-sm hover:text-white py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              时间线
+            </Link>
+            <Link
+              href="/events"
+              className="block text-white/80 text-sm hover:text-white py-2"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              事件列表
+            </Link>
+            {user && user.role >= 2 && (
+              <Link
+                href="/admin"
+                className="block text-white/80 text-sm hover:text-white py-2"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                管理后台
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   );
 }

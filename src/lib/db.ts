@@ -65,6 +65,19 @@ function initDatabase(db: Database.Database) {
       sort_order INTEGER DEFAULT 0,
       FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
     );
+
+    CREATE TABLE IF NOT EXISTS comments (
+      id TEXT PRIMARY KEY,
+      event_id TEXT NOT NULL,
+      user_id TEXT NOT NULL,
+      parent_id TEXT,
+      content TEXT NOT NULL,
+      created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users(id),
+      FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
+    );
   `);
 
   const sectionsCount = db.prepare("SELECT COUNT(*) as count FROM sections").get() as { count: number };
@@ -380,4 +393,93 @@ export async function deleteSection(id: string): Promise<boolean> {
 export async function getAllUsers(): Promise<User[]> {
   const db = getDb();
   return db.prepare("SELECT id, email, nickname, avatar, role, email_verified, created_at FROM users ORDER BY created_at DESC").all() as User[];
+}
+
+export interface Comment {
+  id: string;
+  event_id: string;
+  user_id: string;
+  parent_id: string | null;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  user?: { id: string; nickname: string; avatar: string | null };
+  replies?: Comment[];
+}
+
+export async function getCommentsByEventId(eventId: string): Promise<Comment[]> {
+  const db = getDb();
+  const comments = db.prepare(`
+    SELECT c.*, u.nickname as user_name, u.avatar as user_avatar
+    FROM comments c
+    LEFT JOIN users u ON c.user_id = u.id
+    WHERE c.event_id = ?
+    ORDER BY c.created_at ASC
+  `).all(eventId) as (Comment & { user_name: string; user_avatar: string | null })[];
+
+  const commentMap = new Map<string, Comment>();
+  const rootComments: Comment[] = [];
+
+  comments.forEach((c) => {
+    const comment: Comment = {
+      ...c,
+      user: { id: c.user_id, nickname: c.user_name, avatar: c.user_avatar },
+      replies: [],
+    };
+    commentMap.set(c.id, comment);
+  });
+
+  comments.forEach((c) => {
+    const comment = commentMap.get(c.id)!;
+    if (c.parent_id) {
+      const parent = commentMap.get(c.parent_id);
+      if (parent) {
+        parent.replies = parent.replies || [];
+        parent.replies.push(comment);
+      }
+    } else {
+      rootComments.push(comment);
+    }
+  });
+
+  return rootComments;
+}
+
+export async function createComment(data: {
+  id: string;
+  event_id: string;
+  user_id: string;
+  parent_id: string | null;
+  content: string;
+}): Promise<Comment> {
+  const db = getDb();
+  db.prepare(`
+    INSERT INTO comments (id, event_id, user_id, parent_id, content)
+    VALUES (?, ?, ?, ?, ?)
+  `).run(data.id, data.event_id, data.user_id, data.parent_id, data.content);
+
+  const comment = db.prepare(`
+    SELECT c.*, u.nickname as user_name, u.avatar as user_avatar
+    FROM comments c
+    LEFT JOIN users u ON c.user_id = u.id
+    WHERE c.id = ?
+  `).get(data.id) as Comment & { user_name: string; user_avatar: string | null };
+
+  return {
+    ...comment,
+    user: { id: comment.user_id, nickname: comment.user_name, avatar: comment.user_avatar },
+    replies: [],
+  };
+}
+
+export async function deleteComment(id: string, userId: string): Promise<boolean> {
+  const db = getDb();
+  const comment = db.prepare("SELECT * FROM comments WHERE id = ?").get(id) as Comment | undefined;
+  
+  if (!comment || comment.user_id !== userId) {
+    return false;
+  }
+
+  db.prepare("DELETE FROM comments WHERE id = ?").run(id);
+  return true;
 }
