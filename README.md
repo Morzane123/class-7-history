@@ -63,7 +63,7 @@ npm start      # 生产模式
 项目部署在 Ubuntu 服务器上，使用 PM2 进程管理和 Nginx 反向代理。
 
 ```bash
-cd /www/wwwroot/class-7-history
+cd /var/www/class-7-history
 git pull
 npm run build
 pm2 restart class-7-history
