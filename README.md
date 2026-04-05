@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ![Status](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square)
-![Version](https://img.shields.io/badge/Version-v1.3.0-orange?style=flat-square)
+![Version](https://img.shields.io/badge/Version-v1.4.0-orange?style=flat-square)
 
 ## 项目简介
 
@@ -25,7 +25,8 @@
 ## 功能特性
 
 - 用户注册/登录（邮箱验证）
-- 三级权限管理（普通用户、管理员、超级管理员）
+- 身份验证系统（七班用户/外班用户）
+- 四级权限管理（访客、普通用户、管理员、超级管理员）
 - 板块管理（内政、外交、民生）
 - 事件记录（时间线展示）
 - 富文本编辑器
@@ -48,6 +49,7 @@
 | v1.2.1 | 2b17289 | 添加管理员初始化API | 2026-04-05 |
 | v1.2.2 | 0deaac4 | 修复侧边栏收回后主区域不居中的问题 | 2026-04-05 |
 | v1.3.0 | 0ed4217 | 添加默认头像功能，修复按钮样式问题 | 2026-04-05 |
+| v1.4.0 | - | 修复图片上传问题、删除用户问题，添加身份验证系统 | 2026-04-05 |
 
 ## 开发
 

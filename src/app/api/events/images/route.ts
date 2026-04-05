@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = join(process.cwd(), "public", "uploads", "events");
+    const uploadDir = join(process.cwd(), "uploads", "events");
     await mkdir(uploadDir, { recursive: true });
 
     const fileName = `${uuidv4()}.${file.name.split(".").pop()}`;
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filePath, buffer);
 
-    const publicPath = `/uploads/events/${fileName}`;
+    const publicPath = `/api/files/events/${fileName}`;
     const imageId = uuidv4();
 
     const maxOrder = db.prepare("SELECT MAX(sort_order) as max_order FROM event_images WHERE event_id = ?").get(eventId) as { max_order: number | null };

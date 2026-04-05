@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uploadDir = join(process.cwd(), "public", "uploads", "avatars");
+    const uploadDir = join(process.cwd(), "uploads", "avatars");
     await mkdir(uploadDir, { recursive: true });
 
     const fileName = `${user.id}-${Date.now()}.${file.name.split(".").pop()}`;
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     await writeFile(filePath, buffer);
 
-    const publicPath = `/uploads/avatars/${fileName}`;
+    const publicPath = `/api/files/avatars/${fileName}`;
     
     await updateUser(user.id, { avatar: publicPath });
 

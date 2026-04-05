@@ -16,6 +16,8 @@ interface User {
   nickname: string;
   avatar: string | null;
   role: number;
+  is_class7: number;
+  class_name: string | null;
   email_verified: number;
   created_at: string;
 }
@@ -93,7 +95,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
   };
 
   const handleUpdateUserRole = async (userId: string, newRole: number) => {
-    if (!confirm(`确定要将该用户权限修改为 ${newRole === 1 ? "普通用户" : newRole === 2 ? "管理员" : "超级管理员"} 吗？`)) return;
+    if (!confirm(`确定要将该用户权限修改为 ${newRole === 0 ? "访客" : newRole === 1 ? "普通用户" : newRole === 2 ? "管理员" : "超级管理员"} 吗？`)) return;
 
     try {
       const res = await fetch(`/api/admin/users/${userId}/role`, {
@@ -128,6 +130,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
 
   const getRoleName = (role: number) => {
     switch (role) {
+      case 0: return "访客";
       case 1: return "普通用户";
       case 2: return "管理员";
       case 3: return "超级管理员";
@@ -275,6 +278,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">用户</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">邮箱</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">身份</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">权限</th>
                 <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">状态</th>
                 <th className="px-6 py-4 text-right text-sm font-semibold text-[#1d1d1f]">操作</th>
@@ -290,14 +294,27 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                         alt="" 
                         className="w-8 h-8 rounded-full object-cover" 
                       />
-                      <span className="text-[#1d1d1f]">{user.nickname}</span>
+                      <div>
+                        <span className="text-[#1d1d1f]">{user.nickname}</span>
+                        {user.is_class7 === 0 && user.class_name && (
+                          <span className="text-xs text-[#6e6e73] ml-1">({user.class_name})</span>
+                        )}
+                      </div>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-[#6e6e73]">{user.email}</td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${
+                      user.is_class7 === 1 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
+                    }`}>
+                      {user.is_class7 === 1 ? "七班" : "外班"}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`px-3 py-1 rounded-full text-sm ${
                       user.role === 3 ? "bg-purple-100 text-purple-700" :
                       user.role === 2 ? "bg-blue-100 text-blue-700" :
+                      user.role === 1 ? "bg-green-100 text-green-700" :
                       "bg-gray-100 text-gray-700"
                     }`}>
                       {getRoleName(user.role)}
@@ -317,6 +334,7 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                         onChange={(e) => handleUpdateUserRole(user.id, parseInt(e.target.value))}
                         className="px-3 py-2 border border-[#d2d2d7] rounded-lg text-sm bg-white"
                       >
+                        <option value={0}>访客</option>
                         <option value={1}>普通用户</option>
                         <option value={2}>管理员</option>
                         <option value={3}>超级管理员</option>

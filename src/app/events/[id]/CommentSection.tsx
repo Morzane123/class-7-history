@@ -9,7 +9,7 @@ interface Comment {
   parent_id: string | null;
   content: string;
   created_at: string;
-  user?: { id: string; nickname: string; avatar: string | null };
+  user?: { id: string; nickname: string; avatar: string | null; is_class7?: number; class_name?: string | null };
   replies?: Comment[];
 }
 
@@ -43,12 +43,15 @@ function CommentItem({
     setReplying(false);
   };
 
+  const displayName = comment.user?.nickname + 
+    (comment.user?.is_class7 === 0 && comment.user?.class_name ? ` (${comment.user.class_name})` : "");
+
   return (
     <div className={`${depth > 0 ? "ml-8 border-l-2 border-[#d2d2d7] pl-4" : ""}`}>
       <div className="flex items-start gap-3 py-4">
         <div className="flex-shrink-0">
           {comment.user?.avatar ? (
-            <img src={comment.user.avatar} alt="" className="w-8 h-8 rounded-full" />
+            <img src={comment.user.avatar} alt="" className="w-8 h-8 rounded-full object-cover" />
           ) : (
             <div className="w-8 h-8 rounded-full bg-[#0071e3] flex items-center justify-center text-white text-sm">
               {comment.user?.nickname?.charAt(0)}
@@ -57,7 +60,10 @@ function CommentItem({
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <span className="font-medium text-[#1d1d1f]">{comment.user?.nickname}</span>
+            <span className="font-medium text-[#1d1d1f]">{displayName}</span>
+            {comment.user?.is_class7 === 0 && (
+              <span className="text-xs bg-[#f5f5f7] text-[#6e6e73] px-2 py-0.5 rounded-full">外班</span>
+            )}
             <span className="text-xs text-[#86868b]">
               {new Date(comment.created_at).toLocaleDateString("zh-CN")}
             </span>

@@ -29,6 +29,8 @@ function initDatabase(db: Database.Database) {
       nickname TEXT NOT NULL,
       avatar TEXT,
       role INTEGER DEFAULT 1,
+      is_class7 INTEGER DEFAULT 1,
+      class_name TEXT,
       email_verified INTEGER DEFAULT 0,
       verification_token TEXT,
       reset_token TEXT,
@@ -107,6 +109,8 @@ export interface User {
   nickname: string;
   avatar: string | null;
   role: number;
+  is_class7: number;
+  class_name: string | null;
   email_verified: number;
   verification_token: string | null;
   reset_token: string | null;
@@ -262,12 +266,14 @@ export async function createUser(data: {
   password: string;
   nickname: string;
   verificationToken: string;
+  is_class7?: number;
+  class_name?: string;
 }): Promise<User> {
   const db = getDb();
   db.prepare(`
-    INSERT INTO users (id, email, password, nickname, verification_token)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(data.id, data.email, data.password, data.nickname, data.verificationToken);
+    INSERT INTO users (id, email, password, nickname, verification_token, is_class7, class_name)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(data.id, data.email, data.password, data.nickname, data.verificationToken, data.is_class7 || 1, data.class_name || null);
   
   return getUserById(data.id) as Promise<User>;
 }
@@ -392,7 +398,7 @@ export async function deleteSection(id: string): Promise<boolean> {
 
 export async function getAllUsers(): Promise<User[]> {
   const db = getDb();
-  return db.prepare("SELECT id, email, nickname, avatar, role, email_verified, created_at FROM users ORDER BY created_at DESC").all() as User[];
+  return db.prepare("SELECT id, email, nickname, avatar, role, is_class7, class_name, email_verified, created_at FROM users ORDER BY created_at DESC").all() as User[];
 }
 
 export interface Comment {
@@ -403,19 +409,19 @@ export interface Comment {
   content: string;
   created_at: string;
   updated_at: string;
-  user?: { id: string; nickname: string; avatar: string | null };
+  user?: { id: string; nickname: string; avatar: string | null; is_class7?: number; class_name?: string | null };
   replies?: Comment[];
 }
 
 export async function getCommentsByEventId(eventId: string): Promise<Comment[]> {
   const db = getDb();
   const comments = db.prepare(`
-    SELECT c.*, u.nickname as user_name, u.avatar as user_avatar
+    SELECT c.*, u.nickname as user_name, u.avatar as user_avatar, u.is_class7 as user_is_class7, u.class_name as user_class_name
     FROM comments c
     LEFT JOIN users u ON c.user_id = u.id
     WHERE c.event_id = ?
     ORDER BY c.created_at ASC
-  `).all(eventId) as (Comment & { user_name: string; user_avatar: string | null })[];
+  `).all(eventId) as (Comment & { user_name: string; user_avatar: string | null; user_is_class7: number; user_class_name: string | null })[];
 
   const commentMap = new Map<string, Comment>();
   const rootComments: Comment[] = [];
@@ -423,7 +429,7 @@ export async function getCommentsByEventId(eventId: string): Promise<Comment[]> 
   comments.forEach((c) => {
     const comment: Comment = {
       ...c,
-      user: { id: c.user_id, nickname: c.user_name, avatar: c.user_avatar },
+      user: { id: c.user_id, nickname: c.user_name, avatar: c.user_avatar, is_class7: c.user_is_class7, class_name: c.user_class_name },
       replies: [],
     };
     commentMap.set(c.id, comment);
@@ -459,15 +465,15 @@ export async function createComment(data: {
   `).run(data.id, data.event_id, data.user_id, data.parent_id, data.content);
 
   const comment = db.prepare(`
-    SELECT c.*, u.nickname as user_name, u.avatar as user_avatar
+    SELECT c.*, u.nickname as user_name, u.avatar as user_avatar, u.is_class7 as user_is_class7, u.class_name as user_class_name
     FROM comments c
     LEFT JOIN users u ON c.user_id = u.id
     WHERE c.id = ?
-  `).get(data.id) as Comment & { user_name: string; user_avatar: string | null };
+  `).get(data.id) as Comment & { user_name: string; user_avatar: string | null; user_is_class7: number; user_class_name: string | null };
 
   return {
     ...comment,
-    user: { id: comment.user_id, nickname: comment.user_name, avatar: comment.user_avatar },
+    user: { id: comment.user_id, nickname: comment.user_name, avatar: comment.user_avatar, is_class7: comment.user_is_class7, class_name: comment.user_class_name },
     replies: [],
   };
 }

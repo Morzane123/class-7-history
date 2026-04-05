@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+
+interface Question {
+  id: string;
+  question: string;
+}
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -13,6 +18,31 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  const [identityType, setIdentityType] = useState<"class7" | "other" | null>(null);
+  const [className, setClassName] = useState("");
+  const [question, setQuestion] = useState<Question | null>(null);
+  const [answer, setAnswer] = useState("");
+  const [questionLoading, setQuestionLoading] = useState(false);
+
+  useEffect(() => {
+    if (identityType === "class7") {
+      fetchQuestion();
+    }
+  }, [identityType]);
+
+  const fetchQuestion = async () => {
+    setQuestionLoading(true);
+    try {
+      const res = await fetch("/api/questions/random");
+      const data = await res.json();
+      setQuestion(data.question);
+    } catch {
+      setError("获取验证问题失败");
+    } finally {
+      setQuestionLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,13 +58,36 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!identityType) {
+      setError("请选择身份类型");
+      return;
+    }
+
+    if (identityType === "other" && !className.trim()) {
+      setError("请填写班级信息");
+      return;
+    }
+
+    if (identityType === "class7" && !answer.trim()) {
+      setError("请回答验证问题");
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, nickname }),
+        body: JSON.stringify({
+          email,
+          password,
+          nickname,
+          isClass7: identityType === "class7",
+          className: identityType === "other" ? className : undefined,
+          questionId: identityType === "class7" ? question?.id : undefined,
+          answer: identityType === "class7" ? answer : undefined,
+        }),
       });
 
       const data = await res.json();
@@ -79,7 +132,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f7] to-[#e8e8ed] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f5f7] to-[#e8e8ed] flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-block">
@@ -97,6 +150,87 @@ export default function RegisterPage() {
           )}
 
           <div className="space-y-5">
+            <div>
+              <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                身份选择
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIdentityType("class7")}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
+                    identityType === "class7"
+                      ? "bg-[#0071e3] text-white"
+                      : "bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ed]"
+                  }`}
+                >
+                  我是七班的
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIdentityType("other")}
+                  className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
+                    identityType === "other"
+                      ? "bg-[#0071e3] text-white"
+                      : "bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#e8e8ed]"
+                  }`}
+                >
+                  我是外班的
+                </button>
+              </div>
+            </div>
+
+            {identityType === "class7" && (
+              <div className="p-4 bg-[#f5f5f7] rounded-xl">
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                  验证问题
+                </label>
+                {questionLoading ? (
+                  <div className="flex items-center justify-center py-4">
+                    <div className="w-6 h-6 border-2 border-[#0071e3] border-t-transparent rounded-full animate-spin" />
+                  </div>
+                ) : question ? (
+                  <>
+                    <p className="text-sm text-[#1d1d1f] mb-3" dangerouslySetInnerHTML={{ __html: question.question.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
+                    <input
+                      type="text"
+                      value={answer}
+                      onChange={(e) => setAnswer(e.target.value)}
+                      className="input-field"
+                      placeholder="请输入答案"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={fetchQuestion}
+                      className="text-xs text-[#0071e3] mt-2 hover:underline"
+                    >
+                      换一个问题
+                    </button>
+                  </>
+                ) : (
+                  <p className="text-sm text-[#6e6e73]">加载问题失败</p>
+                )}
+              </div>
+            )}
+
+            {identityType === "other" && (
+              <div>
+                <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                  班级
+                </label>
+                <input
+                  type="text"
+                  value={className}
+                  onChange={(e) => setClassName(e.target.value)}
+                  className="input-field"
+                  placeholder="请输入您的班级（如：高2027届1班）"
+                  required
+                />
+                <p className="text-xs text-[#86868b] mt-1">外班用户只能发表评论</p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
                 昵称
@@ -156,8 +290,8 @@ export default function RegisterPage() {
 
           <button
             type="submit"
-            disabled={loading}
-            className="btn-primary w-full mt-6"
+            disabled={loading || !identityType}
+            className="btn-primary w-full mt-6 disabled:bg-[#d2d2d7] disabled:cursor-not-allowed"
           >
             {loading ? "注册中..." : "注册"}
           </button>
