@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 
 interface Section {
@@ -18,6 +18,7 @@ interface User {
   role: number;
   is_class7: number;
   class_name: string | null;
+  approved: number;
   email_verified: number;
   created_at: string;
 }
@@ -29,12 +30,31 @@ interface AdminTabsProps {
 }
 
 export default function AdminTabs({ sections: initialSections, users: initialUsers, currentUserRole }: AdminTabsProps) {
-  const [activeTab, setActiveTab] = useState<"sections" | "users">("sections");
+  const [activeTab, setActiveTab] = useState<"sections" | "users" | "pending">("pending");
   const [sections, setSections] = useState(initialSections);
   const [users, setUsers] = useState(initialUsers);
+  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
 
   const [newSection, setNewSection] = useState({ name: "", description: "" });
   const [editingSection, setEditingSection] = useState<Section | null>(null);
+
+  useEffect(() => {
+    if (activeTab === "pending") {
+      fetchPendingUsers();
+    }
+  }, [activeTab]);
+
+  const fetchPendingUsers = async () => {
+    try {
+      const res = await fetch("/api/admin/pending");
+      const data = await res.json();
+      if (res.ok) {
+        setPendingUsers(data.users);
+      }
+    } catch {
+      console.error("获取待审核用户失败");
+    }
+  };
 
   const handleCreateSection = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +148,38 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
     }
   };
 
+  const handleApproveUser = async (userId: string) => {
+    if (!confirm("确定要通过此用户的审核吗？")) return;
+
+    try {
+      const res = await fetch(`/api/admin/pending/${userId}/approve`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        setPendingUsers(pendingUsers.filter((u) => u.id !== userId));
+      }
+    } catch {
+      alert("审核失败");
+    }
+  };
+
+  const handleRejectUser = async (userId: string) => {
+    if (!confirm("确定要拒绝此用户的注册申请吗？")) return;
+
+    try {
+      const res = await fetch(`/api/admin/pending/${userId}/reject`, {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        setPendingUsers(pendingUsers.filter((u) => u.id !== userId));
+      }
+    } catch {
+      alert("拒绝失败");
+    }
+  };
+
   const getRoleName = (role: number) => {
     switch (role) {
       case 0: return "访客";
@@ -141,6 +193,21 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
   return (
     <div>
       <div className="flex gap-4 mb-8">
+        {pendingUsers.length > 0 && (
+          <span className="absolute -mt-2 ml-28 bg-[#ff3b30] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+            {pendingUsers.length}
+          </span>
+        )}
+        <button
+          onClick={() => setActiveTab("pending")}
+          className={`px-6 py-3 rounded-xl font-medium transition-colors ${
+            activeTab === "pending"
+              ? "bg-[#0071e3] text-white"
+              : "bg-white text-[#1d1d1f] hover:bg-[#f5f5f7]"
+          }`}
+        >
+          待审核
+        </button>
         <button
           onClick={() => setActiveTab("sections")}
           className={`px-6 py-3 rounded-xl font-medium transition-colors ${
@@ -162,6 +229,69 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
           用户管理
         </button>
       </div>
+
+      {activeTab === "pending" && (
+        <div className="bg-white rounded-2xl shadow-[rgba(0,0,0,0.08)_0px_2px_8px] overflow-hidden">
+          {pendingUsers.length === 0 ? (
+            <div className="p-8 text-center text-[#6e6e73]">
+              暂无待审核用户
+            </div>
+          ) : (
+            <table className="w-full">
+              <thead className="bg-[#f5f5f7]">
+                <tr>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">用户</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">邮箱</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">身份</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-[#1d1d1f]">注册时间</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-[#1d1d1f]">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[#d2d2d7]">
+                {pendingUsers.map((user) => (
+                  <tr key={user.id}>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={user.avatar || "/default-avatar.png"} 
+                          alt="" 
+                          className="w-8 h-8 rounded-full object-cover" 
+                        />
+                        <span className="text-[#1d1d1f]">{user.nickname}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-[#6e6e73]">{user.email}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-sm ${
+                        user.is_class7 === 1 ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-700"
+                      }`}>
+                        {user.is_class7 === 1 ? "七班" : user.class_name || "外班"}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-[#6e6e73]">
+                      {new Date(user.created_at).toLocaleDateString("zh-CN")}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => handleApproveUser(user.id)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 mr-2"
+                      >
+                        通过
+                      </button>
+                      <button
+                        onClick={() => handleRejectUser(user.id)}
+                        className="px-4 py-2 bg-[#ff3b30] text-white rounded-lg hover:bg-red-600"
+                      >
+                        拒绝
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      )}
 
       {activeTab === "sections" && (
         <div className="space-y-6">
@@ -322,9 +452,9 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-3 py-1 rounded-full text-sm ${
-                      user.email_verified ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
+                      user.approved ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
                     }`}>
-                      {user.email_verified ? "已验证" : "未验证"}
+                      {user.approved ? "已审核" : "待审核"}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">

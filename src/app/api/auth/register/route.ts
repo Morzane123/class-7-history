@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { v4 as uuidv4 } from "uuid";
 import { hash } from "bcryptjs";
-import { createUser, getUserByEmail } from "@/lib/db";
-import { sendVerificationEmail } from "@/lib/email";
+import { createUser, getUserByEmail, getDb } from "@/lib/db";
+import { sendVerificationEmail, sendNewUserNotification } from "@/lib/email";
 import { checkAnswer } from "@/lib/questions";
 
 export async function POST(request: NextRequest) {
@@ -68,15 +68,20 @@ export async function POST(request: NextRequest) {
       class_name: isClass7 ? undefined : className.trim(),
     });
 
+    const db = getDb();
+    
     if (!isClass7) {
-      const db = (await import("@/lib/db")).getDb();
       db.prepare("UPDATE users SET role = 0 WHERE id = ?").run(user.id);
     }
+    
+    db.prepare("UPDATE users SET approved = 0 WHERE id = ?").run(user.id);
 
     await sendVerificationEmail(email, verificationToken);
+    
+    sendNewUserNotification(nickname, email, isClass7 ? "七班" : className).catch(console.error);
 
     return NextResponse.json(
-      { message: "注册成功，请查收验证邮件" },
+      { message: "注册成功，请查收验证邮件。账号需要管理员审核通过后才能登录。" },
       { status: 201 }
     );
   } catch (error) {

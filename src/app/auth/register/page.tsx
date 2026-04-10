@@ -297,6 +297,13 @@ export default function RegisterPage() {
             {loading ? "注册中..." : "注册"}
           </button>
 
+          <p className="mt-4 text-center text-xs text-[#86868b]">
+            注册即代表同意
+            <Link href="/terms" target="_blank" className="text-[#0071e3] hover:underline ml-1">
+              使用条例
+            </Link>
+          </p>
+
           <div className="mt-6 pt-6 border-t border-[#d2d2d7] text-center text-sm text-[#6e6e73]">
             已有账号？
             <Link href="/auth/login" className="text-[#0071e3] hover:underline ml-1">

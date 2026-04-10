@@ -111,6 +111,7 @@ export interface User {
   role: number;
   is_class7: number;
   class_name: string | null;
+  approved: number;
   email_verified: number;
   verification_token: string | null;
   reset_token: string | null;
@@ -399,7 +400,24 @@ export async function deleteSection(id: string): Promise<boolean> {
 
 export async function getAllUsers(): Promise<User[]> {
   const db = getDb();
-  return db.prepare("SELECT id, email, nickname, avatar, role, is_class7, class_name, email_verified, created_at FROM users ORDER BY created_at DESC").all() as User[];
+  return db.prepare("SELECT id, email, nickname, avatar, role, is_class7, class_name, approved, email_verified, created_at FROM users ORDER BY created_at DESC").all() as User[];
+}
+
+export async function getPendingUsers(): Promise<User[]> {
+  const db = getDb();
+  return db.prepare("SELECT id, email, nickname, avatar, role, is_class7, class_name, approved, email_verified, created_at FROM users WHERE approved = 0 ORDER BY created_at DESC").all() as User[];
+}
+
+export async function approveUser(id: string): Promise<boolean> {
+  const db = getDb();
+  const result = db.prepare("UPDATE users SET approved = 1 WHERE id = ?").run(id);
+  return result.changes > 0;
+}
+
+export async function rejectUser(id: string): Promise<boolean> {
+  const db = getDb();
+  const result = db.prepare("DELETE FROM users WHERE id = ?").run(id);
+  return result.changes > 0;
 }
 
 export interface Comment {

@@ -1,0 +1,14 @@
+[Unit]
+Description=七班班史系统数据备份服务
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/var/www/class-7-history/scripts/backup.sh
+User=root
+Group=root
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

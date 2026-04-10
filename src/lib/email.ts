@@ -65,3 +65,39 @@ export async function sendPasswordResetEmail(email: string, token: string) {
     `,
   });
 }
+
+export async function sendNewUserNotification(nickname: string, email: string, identity: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3003";
+  const adminUrl = `${baseUrl}/admin`;
+
+  const { getDb } = await import("@/lib/db");
+  const db = getDb();
+  const admins = db.prepare("SELECT email FROM users WHERE role >= 2 AND email_verified = 1").all() as { email: string }[];
+
+  if (admins.length === 0) return;
+
+  await transporter.sendMail({
+    from: `"北域工作室" <${process.env.SMTP_USER || "northland@xuanjian.top"}>`,
+    to: admins.map(a => a.email),
+    subject: "【璧山中学高2027届7班班史】新用户注册待审核",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <h1 style="color: #1d1d1f; font-size: 24px; margin-bottom: 20px;">新用户注册待审核</h1>
+        <p style="color: #6e6e73; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+          有新用户注册了璧山中学高2027届7班班史系统，请及时审核：
+        </p>
+        <div style="background-color: #f5f5f7; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
+          <p style="color: #1d1d1f; font-size: 14px; margin: 8px 0;"><strong>昵称：</strong>${nickname}</p>
+          <p style="color: #1d1d1f; font-size: 14px; margin: 8px 0;"><strong>邮箱：</strong>${email}</p>
+          <p style="color: #1d1d1f; font-size: 14px; margin: 8px 0;"><strong>身份：</strong>${identity}</p>
+        </div>
+        <a href="${adminUrl}" style="display: inline-block; background-color: #0071e3; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: 500;">
+          前往审核
+        </a>
+        <p style="color: #86868b; font-size: 14px; margin-top: 30px;">
+          此邮件为系统自动发送，请勿回复。
+        </p>
+      </div>
+    `,
+  });
+}

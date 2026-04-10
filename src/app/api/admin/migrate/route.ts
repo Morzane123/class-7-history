@@ -8,23 +8,18 @@ export async function GET() {
     const tableInfo = db.prepare("PRAGMA table_info(users)").all() as { name: string }[];
     const columnNames = tableInfo.map(col => col.name);
     
-    if (!columnNames.includes("is_class7")) {
-      db.exec("ALTER TABLE users ADD COLUMN is_class7 INTEGER DEFAULT 1");
-      console.log("Added column: is_class7");
-    }
+    const migrations: string[] = [];
     
-    if (!columnNames.includes("class_name")) {
-      db.exec("ALTER TABLE users ADD COLUMN class_name TEXT");
-      console.log("Added column: class_name");
+    if (!columnNames.includes("approved")) {
+      db.exec("ALTER TABLE users ADD COLUMN approved INTEGER DEFAULT 1");
+      migrations.push("approved: 已添加");
+    } else {
+      migrations.push("approved: 已存在");
     }
     
     return NextResponse.json({ 
       message: "数据库迁移成功",
-      columns: columnNames,
-      added: {
-        is_class7: !columnNames.includes("is_class7") ? "已添加" : "已存在",
-        class_name: !columnNames.includes("class_name") ? "已添加" : "已存在"
-      }
+      migrations
     });
   } catch (error) {
     console.error("Migration error:", error);

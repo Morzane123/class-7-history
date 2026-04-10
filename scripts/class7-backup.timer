@@ -1,0 +1,12 @@
+[Unit]
+Description=七班班史系统数据每日备份定时器
+Requires=class7-backup.service
+
+[Timer]
+OnCalendar=*-*-* 03:00:00
+Persistent=true
+AccuracySec=1min
+RandomizedDelaySec=5min
+
+[Install]
+WantedBy=timers.target

@@ -32,6 +32,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (!user.approved) {
+      return NextResponse.json(
+        { error: "账号正在等待管理员审核，请耐心等待" },
+        { status: 401 }
+      );
+    }
+
     const isValidPassword = await compare(password, user.password);
     if (!isValidPassword) {
       return NextResponse.json(

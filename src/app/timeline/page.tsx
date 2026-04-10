@@ -1,6 +1,11 @@
+import { cookies } from "next/headers";
+import { verify } from "jsonwebtoken";
 import Navigation from "@/components/Navigation";
 import LayoutClient from "@/components/LayoutClient";
 import { getSections, getEvents } from "@/lib/db";
+import Link from "next/link";
+
+const JWT_SECRET = process.env.JWT_SECRET || "class-7-history-secret-key-2027";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +14,19 @@ export default async function TimelinePage({
 }: {
   searchParams: Promise<{ section?: string; year?: string; month?: string }>;
 }) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("auth_token")?.value;
+  
+  let isLoggedIn = false;
+  if (token) {
+    try {
+      verify(token, JWT_SECRET);
+      isLoggedIn = true;
+    } catch {
+      isLoggedIn = false;
+    }
+  }
+
   const params = await searchParams;
   const sections = await getSections();
   const events = await getEvents({
@@ -36,6 +54,28 @@ export default async function TimelinePage({
 
   const sortedKeys = Object.keys(groupedEvents).sort((a, b) => b.localeCompare(a));
 
+  if (!isLoggedIn) {
+    return (
+      <div className="min-h-screen bg-[#f5f5f7]">
+        <Navigation />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <div className="w-16 h-16 bg-[#0071e3]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-8 h-8 text-[#0071e3]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-semibold text-[#1d1d1f] mb-2">请先登录</h2>
+            <p className="text-[#6e6e73] mb-6">登录后才能查看班史内容</p>
+            <Link href="/auth/login" className="btn-primary">
+              前往登录
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
       <Navigation />
@@ -48,55 +88,45 @@ export default async function TimelinePage({
 
             {sortedKeys.length === 0 ? (
               <div className="text-center py-20">
-                <p className="text-[#6e6e73] text-lg">暂无事件记录</p>
+                <p className="text-[#6e6e73]">暂无事件记录</p>
               </div>
             ) : (
-              <div className="space-y-12">
+              <div className="space-y-8">
                 {sortedKeys.map((key) => {
                   const group = groupedEvents[key];
                   return (
                     <div key={key}>
-                      <div className="flex items-center gap-4 mb-6">
-                        <div className="timeline-badge">
-                          <span className="text-2xl font-semibold">{group.year}</span>
-                          <span className="text-lg ml-1">年{group.month}月</span>
-                        </div>
-                        <div className="flex-1 h-px bg-[#d2d2d7]" />
-                      </div>
-
+                      <h2 className="text-xl font-semibold text-[#1d1d1f] mb-4">
+                        {group.year}年{group.month}月
+                      </h2>
                       <div className="space-y-4">
                         {group.events.map((event) => (
-                          <a
+                          <Link
                             key={event.id}
                             href={`/events/${event.id}`}
-                            className="block bg-white rounded-xl p-6 shadow-[rgba(0,0,0,0.08)_0px_2px_8px] hover:shadow-[rgba(0,0,0,0.12)_0px_4px_16px] transition-shadow"
+                            className="block bg-white rounded-2xl p-6 shadow-[rgba(0,0,0,0.08)_0px_2px_8px] hover:shadow-[rgba(0,0,0,0.12)_0px_4px_16px] transition-shadow"
                           >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-3 mb-2">
-                                  <span className="badge badge-primary">
-                                    {event.section?.name}
-                                  </span>
-                                  <span className="text-sm text-[#6e6e73]">
-                                    {new Date(event.event_date).toLocaleDateString("zh-CN")}
-                                  </span>
-                                </div>
-                                <h3 className="text-xl font-semibold text-[#1d1d1f] mb-2">
+                            <div className="flex items-start gap-4">
+                              <div className="flex-shrink-0 w-12 h-12 bg-[#0071e3]/10 rounded-xl flex items-center justify-center">
+                                <span className="text-[#0071e3] font-semibold">
+                                  {new Date(event.event_date).getDate()}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-medium text-[#1d1d1f] mb-1">
                                   {event.title}
                                 </h3>
-                                <p className="text-[#6e6e73] line-clamp-2">
-                                  {event.content}
+                                <p className="text-sm text-[#6e6e73] line-clamp-2">
+                                  {event.content.replace(/<[^>]*>/g, "")}
                                 </p>
+                                {event.section_name && (
+                                  <span className="inline-block mt-2 px-3 py-1 bg-[#f5f5f7] rounded-full text-xs text-[#6e6e73]">
+                                    {event.section_name}
+                                  </span>
+                                )}
                               </div>
                             </div>
-                            <div className="mt-4 flex items-center gap-2 text-sm text-[#86868b]">
-                              <span>记录者：{event.author?.nickname}</span>
-                              <span>·</span>
-                              <span>
-                                {new Date(event.created_at).toLocaleDateString("zh-CN")}
-                              </span>
-                            </div>
-                          </a>
+                          </Link>
                         ))}
                       </div>
                     </div>
