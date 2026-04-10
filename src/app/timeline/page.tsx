@@ -119,9 +119,9 @@ export default async function TimelinePage({
                                 <p className="text-sm text-[#6e6e73] line-clamp-2">
                                   {event.content.replace(/<[^>]*>/g, "")}
                                 </p>
-                                {event.section_name && (
+                                {event.section && (
                                   <span className="inline-block mt-2 px-3 py-1 bg-[#f5f5f7] rounded-full text-xs text-[#6e6e73]">
-                                    {event.section_name}
+                                    {event.section.name}
                                   </span>
                                 )}
                               </div>
