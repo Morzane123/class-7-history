@@ -193,20 +193,20 @@ export default function AdminTabs({ sections: initialSections, users: initialUse
   return (
     <div>
       <div className="flex gap-4 mb-8">
-        {pendingUsers.length > 0 && (
-          <span className="absolute -mt-2 ml-28 bg-[#ff3b30] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
-            {pendingUsers.length}
-          </span>
-        )}
         <button
           onClick={() => setActiveTab("pending")}
-          className={`px-6 py-3 rounded-xl font-medium transition-colors ${
+          className={`relative px-6 py-3 rounded-xl font-medium transition-colors ${
             activeTab === "pending"
               ? "bg-[#0071e3] text-white"
               : "bg-white text-[#1d1d1f] hover:bg-[#f5f5f7]"
           }`}
         >
           待审核
+          {pendingUsers.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-[#ff3b30] text-white text-xs w-5 h-5 rounded-full flex items-center justify-center">
+              {pendingUsers.length}
+            </span>
+          )}
         </button>
         <button
           onClick={() => setActiveTab("sections")}

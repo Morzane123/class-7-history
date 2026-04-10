@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { approveUser } from "@/lib/db";
+import { approveUser, getUserById } from "@/lib/db";
+import { sendApprovalEmail } from "@/lib/email";
 
 export async function POST(
   request: NextRequest,
@@ -13,11 +14,19 @@ export async function POST(
     }
 
     const { id } = await params;
+    
+    const user = await getUserById(id);
+    if (!user) {
+      return NextResponse.json({ error: "用户不存在" }, { status: 404 });
+    }
+
     const success = await approveUser(id);
 
     if (!success) {
       return NextResponse.json({ error: "审核失败" }, { status: 400 });
     }
+
+    sendApprovalEmail(user.email, user.nickname).catch(console.error);
 
     return NextResponse.json({ message: "审核通过" });
   } catch (error) {

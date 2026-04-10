@@ -101,3 +101,53 @@ export async function sendNewUserNotification(nickname: string, email: string, i
     `,
   });
 }
+
+export async function sendApprovalEmail(email: string, nickname: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3003";
+  const loginUrl = `${baseUrl}/auth/login`;
+
+  await transporter.sendMail({
+    from: `"北域工作室" <${process.env.SMTP_USER || "northland@xuanjian.top"}>`,
+    to: email,
+    subject: "【璧山中学高2027届7班班史】账号审核通过",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <h1 style="color: #1d1d1f; font-size: 24px; margin-bottom: 20px;">审核通过</h1>
+        <p style="color: #6e6e73; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+          您好，${nickname}！
+        </p>
+        <p style="color: #6e6e73; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+          恭喜！您的璧山中学高2027届7班班史系统账号已通过审核，现在可以登录使用了。
+        </p>
+        <a href="${loginUrl}" style="display: inline-block; background-color: #0071e3; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-size: 16px; font-weight: 500;">
+          立即登录
+        </a>
+        <p style="color: #86868b; font-size: 14px; margin-top: 30px;">
+          此邮件为系统自动发送，请勿回复。
+        </p>
+      </div>
+    `,
+  });
+}
+
+export async function sendRejectionEmail(email: string, nickname: string) {
+  await transporter.sendMail({
+    from: `"北域工作室" <${process.env.SMTP_USER || "northland@xuanjian.top"}>`,
+    to: email,
+    subject: "【璧山中学高2027届7班班史】账号审核未通过",
+    html: `
+      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+        <h1 style="color: #1d1d1f; font-size: 24px; margin-bottom: 20px;">审核未通过</h1>
+        <p style="color: #6e6e73; font-size: 16px; line-height: 1.5; margin-bottom: 20px;">
+          您好，${nickname}！
+        </p>
+        <p style="color: #6e6e73; font-size: 16px; line-height: 1.5; margin-bottom: 30px;">
+          很抱歉，您的璧山中学高2027届7班班史系统账号注册申请未通过审核。如有疑问，请联系管理员。
+        </p>
+        <p style="color: #86868b; font-size: 14px; margin-top: 30px;">
+          此邮件为系统自动发送，请勿回复。
+        </p>
+      </div>
+    `,
+  });
+}
