@@ -15,21 +15,27 @@ export interface VideoCompressResult {
   duration: number;
 }
 
+export interface ProgressCallback {
+  (progress: number, status: string): void;
+}
+
 export async function compressVideo(
   inputPath: string,
   options: {
     maxSizeMB?: number;
     outputDir: string;
     filename: string;
+    onProgress?: ProgressCallback;
   }
 ): Promise<VideoCompressResult> {
-  const { maxSizeMB = 50, outputDir, filename } = options;
+  const { maxSizeMB = 50, outputDir, filename, onProgress } = options;
 
   await mkdir(outputDir, { recursive: true });
 
   const outputPath = join(outputDir, `${filename}.mp4`);
 
   console.log(`[VideoCompress] Starting compression: ${inputPath} -> ${outputPath}`);
+  onProgress?.(0, "开始压缩...");
 
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
@@ -37,25 +43,29 @@ export async function compressVideo(
       .setFfprobePath(ffprobePath)
       .output(outputPath)
       .videoCodec("libx264")
-      .videoFilters("scale=1920:-2")
+      .videoFilters("scale=1280:-2")
       .outputOptions([
-        "-crf 28",
-        "-preset medium",
+        "-crf 32",
+        "-preset veryfast",
         "-movflags +faststart",
-        "-maxrate 5M",
-        "-bufsize 10M",
+        "-maxrate 3M",
+        "-bufsize 6M",
       ])
       .on("start", (commandLine) => {
         console.log(`[VideoCompress] FFmpeg command: ${commandLine}`);
+        onProgress?.(5, "开始编码...");
       })
       .on("progress", (progress) => {
         if (progress.percent) {
-          console.log(`[VideoCompress] Progress: ${Math.round(progress.percent)}%`);
+          const percent = Math.min(Math.round(progress.percent), 95);
+          console.log(`[VideoCompress] Progress: ${percent}%`);
+          onProgress?.(percent, `压缩中... ${percent}%`);
         }
       })
       .on("end", async () => {
         try {
           console.log(`[VideoCompress] Compression finished, checking file size...`);
+          onProgress?.(96, "检查文件大小...");
           
           const inputStats = await stat(inputPath);
           const outputStats = await stat(outputPath);
@@ -65,6 +75,7 @@ export async function compressVideo(
 
           if (finalSize > maxSizeMB * 1024 * 1024) {
             console.log(`[VideoCompress] File too large (${(finalSize / 1024 / 1024).toFixed(2)}MB), re-encoding...`);
+            onProgress?.(97, "文件过大，重新编码...");
             
             const duration = await getVideoDuration(inputPath);
             const bitrate = Math.floor((maxSizeMB * 8 * 1024) / duration);
@@ -77,10 +88,10 @@ export async function compressVideo(
                 .setFfprobePath(ffprobePath)
                 .output(outputPath)
                 .videoCodec("libx264")
-                .videoFilters("scale=1280:-2")
+                .videoFilters("scale=854:-2")
                 .outputOptions([
                   `-b:v ${bitrate}k`,
-                  "-preset medium",
+                  "-preset veryfast",
                   "-movflags +faststart",
                 ])
                 .on("end", () => {
@@ -101,6 +112,7 @@ export async function compressVideo(
           const duration = await getVideoDuration(outputPath);
 
           console.log(`[VideoCompress] Success! Original: ${(inputStats.size / 1024 / 1024).toFixed(2)}MB, Compressed: ${(finalSize / 1024 / 1024).toFixed(2)}MB`);
+          onProgress?.(100, "压缩完成");
 
           resolve({
             path: finalPath,

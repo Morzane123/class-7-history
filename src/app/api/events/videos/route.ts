@@ -5,6 +5,12 @@ import { join } from "path";
 import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { compressVideo, getVideoMetadata } from "@/lib/videoCompress";
+import {
+  createProgress,
+  updateProgress,
+  getProgress,
+  cleanOldProgress,
+} from "@/lib/progressStore";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,7 +18,9 @@ export const maxDuration = 300;
 
 export async function POST(request: NextRequest) {
   console.log("[VideoUpload] Starting video upload...");
-  
+
+  cleanOldProgress();
+
   try {
     const user = await getCurrentUser();
     if (!user) {
@@ -49,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     const db = getDb();
     const event = db.prepare("SELECT * FROM events WHERE id = ?").get(eventId) as { author_id: string } | undefined;
-    
+
     if (!event) {
       console.log(`[VideoUpload] Error: Event ${eventId} not found`);
       return NextResponse.json({ error: "事件不存在" }, { status: 404 });
@@ -59,6 +67,14 @@ export async function POST(request: NextRequest) {
       console.log(`[VideoUpload] Error: No permission`);
       return NextResponse.json({ error: "无权限" }, { status: 403 });
     }
+
+    const progressId = uuidv4();
+    createProgress(progressId);
+    updateProgress(progressId, {
+      status: "uploading",
+      message: "上传中...",
+      originalSize: file.size,
+    });
 
     const tempDir = join(process.cwd(), "uploads", "temp");
     await mkdir(tempDir, { recursive: true });
@@ -73,6 +89,12 @@ export async function POST(request: NextRequest) {
     await writeFile(tempPath, buffer);
     console.log(`[VideoUpload] Temp file written, size: ${buffer.length} bytes`);
 
+    updateProgress(progressId, {
+      status: "compressing",
+      progress: 0,
+      message: "开始压缩...",
+    });
+
     const uploadDir = join(process.cwd(), "uploads", "videos");
     await mkdir(uploadDir, { recursive: true });
     console.log(`[VideoUpload] Upload directory: ${uploadDir}`);
@@ -84,6 +106,13 @@ export async function POST(request: NextRequest) {
       maxSizeMB: 50,
       outputDir: uploadDir,
       filename,
+      onProgress: (progress, message) => {
+        updateProgress(progressId, {
+          status: "compressing",
+          progress,
+          message,
+        });
+      },
     });
     console.log(`[VideoUpload] Compression complete: ${result.compressedSize} bytes`);
 
@@ -103,21 +132,30 @@ export async function POST(request: NextRequest) {
     db.prepare("INSERT INTO event_videos (id, event_id, video_path, sort_order) VALUES (?, ?, ?, ?)").run(videoId, eventId, publicPath, sortOrder);
     console.log(`[VideoUpload] Database record created: ${videoId}`);
 
-    return NextResponse.json({ 
-      video: { 
-        id: videoId, 
-        video_path: publicPath, 
+    updateProgress(progressId, {
+      status: "completed",
+      progress: 100,
+      message: "上传完成",
+      endTime: Date.now(),
+      compressedSize: result.compressedSize,
+    });
+
+    return NextResponse.json({
+      video: {
+        id: videoId,
+        video_path: publicPath,
         event_id: eventId,
         sort_order: sortOrder,
         originalSize: result.originalSize,
         compressedSize: result.compressedSize,
         duration: result.duration,
-      } 
+      },
+      progressId,
     });
   } catch (error) {
     console.error("[VideoUpload] Error:", error);
-    return NextResponse.json({ 
-      error: "上传失败: " + (error instanceof Error ? error.message : "未知错误") 
+    return NextResponse.json({
+      error: "上传失败: " + (error instanceof Error ? error.message : "未知错误"),
     }, { status: 500 });
   }
 }

@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ![Status](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square)
-![Version](https://img.shields.io/badge/Version-v1.6.1-orange?style=flat-square)
+![Version](https://img.shields.io/badge/Version-v1.6.2-orange?style=flat-square)
 
 ## 项目简介
 
@@ -54,6 +54,8 @@
 - 图片上传（自动压缩转WebP格式）
 - 视频上传（自动压缩至50MB左右）
 - 视频流式传输（Range请求支持边下边播）
+- 视频压缩进度实时反馈
+- 小视频并行上传（<50MB）
 - 头像上传（自动压缩至200x200px）
 
 ### 界面设计
@@ -228,6 +230,7 @@ class-7-history/
 | v1.5.1 | a9cbf85 | 添加审核结果邮件通知，修复红点位置        | 2026-04-05 |
 | v1.6.0 | d95ac9b | 添加图片压缩、视频上传与压缩功能         | 2026-04-05 |
 | v1.6.1 | 43a74f3 | 视频流式传输、编辑页面视频功能          | 2026-04-11 |
+| v1.6.2 | -       | 视频压缩进度反馈、并行上传、硬件优化        | 2026-04-11 |
 
 ## 开发指南
 

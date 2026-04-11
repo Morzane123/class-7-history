@@ -26,7 +26,12 @@ interface UploadedVideo {
   preview: string;
   name: string;
   size: number;
+  progress?: number;
+  status?: "pending" | "uploading" | "compressing" | "completed" | "error";
+  message?: string;
 }
+
+const SMALL_VIDEO_THRESHOLD = 50 * 1024 * 1024;
 
 export default function CreateEventPage() {
   const router = useRouter();
@@ -34,6 +39,7 @@ export default function CreateEventPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [userRole, setUserRole] = useState<number | null>(null);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
 
   const [formData, setFormData] = useState({
     section_id: "",
@@ -55,13 +61,13 @@ export default function CreateEventPage() {
           router.push("/auth/login");
           return;
         }
-        
+
         setUserRole(authData.user.role);
-        
+
         if (authData.user.role < 1) {
           return;
         }
-        
+
         setSections(sectionsData.sections || []);
         if (sectionsData.sections?.length > 0) {
           setFormData((prev) => ({ ...prev, section_id: sectionsData.sections[0].id }));
@@ -70,10 +76,111 @@ export default function CreateEventPage() {
       .catch(() => router.push("/auth/login"));
   }, [router]);
 
+  const uploadVideoWithProgress = async (
+    video: UploadedVideo,
+    eventId: string,
+    videoId: string
+  ): Promise<boolean> => {
+    const videoFormData = new FormData();
+    videoFormData.append("video", video.file);
+    videoFormData.append("eventId", eventId);
+
+    setVideos((prev) =>
+      prev.map((v) =>
+        v.id === videoId ? { ...v, status: "uploading" as const, message: "上传中..." } : v
+      )
+    );
+
+    try {
+      const videoRes = await fetch("/api/events/videos", {
+        method: "POST",
+        body: videoFormData,
+      });
+
+      const videoData = await videoRes.json();
+
+      if (!videoRes.ok) {
+        setVideos((prev) =>
+          prev.map((v) =>
+            v.id === videoId
+              ? { ...v, status: "error" as const, message: videoData.error || "上传失败" }
+              : v
+          )
+        );
+        return false;
+      }
+
+      if (videoData.progressId) {
+        const pollProgress = async () => {
+          const progressRes = await fetch(
+            `/api/events/videos/progress?id=${videoData.progressId}`
+          );
+          const progressData = await progressRes.json();
+
+          if (progressData.progress) {
+            setVideos((prev) =>
+              prev.map((v) =>
+                v.id === videoId
+                  ? {
+                      ...v,
+                      status: progressData.progress.status,
+                      progress: progressData.progress.progress,
+                      message: progressData.progress.message,
+                    }
+                  : v
+              )
+            );
+
+            if (
+              progressData.progress.status === "compressing" ||
+              progressData.progress.status === "uploading"
+            ) {
+              setTimeout(pollProgress, 500);
+            } else if (progressData.progress.status === "completed") {
+              setVideos((prev) =>
+                prev.map((v) =>
+                  v.id === videoId
+                    ? { ...v, status: "completed" as const, message: "上传完成" }
+                    : v
+                )
+              );
+            } else if (progressData.progress.status === "error") {
+              setVideos((prev) =>
+                prev.map((v) =>
+                  v.id === videoId
+                    ? { ...v, status: "error" as const, message: progressData.progress.error || "上传失败" }
+                    : v
+                )
+              );
+            }
+          }
+        };
+
+        pollProgress();
+      } else {
+        setVideos((prev) =>
+          prev.map((v) =>
+            v.id === videoId ? { ...v, status: "completed" as const } : v
+          )
+        );
+      }
+
+      return true;
+    } catch {
+      setVideos((prev) =>
+        prev.map((v) =>
+          v.id === videoId ? { ...v, status: "error" as const, message: "上传失败" } : v
+        )
+      );
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setLoading(true);
+    setUploadingVideos(false);
 
     try {
       const res = await fetch("/api/events/create", {
@@ -90,12 +197,14 @@ export default function CreateEventPage() {
         return;
       }
 
+      const eventId = data.event.id;
+
       if (images.length > 0) {
         for (const image of images) {
           const imgFormData = new FormData();
           imgFormData.append("image", image.file);
-          imgFormData.append("eventId", data.event.id);
-          
+          imgFormData.append("eventId", eventId);
+
           await fetch("/api/events/images", {
             method: "POST",
             body: imgFormData,
@@ -104,26 +213,45 @@ export default function CreateEventPage() {
       }
 
       if (videos.length > 0) {
-        for (const video of videos) {
-          const videoFormData = new FormData();
-          videoFormData.append("video", video.file);
-          videoFormData.append("eventId", data.event.id);
-          
-          const videoRes = await fetch("/api/events/videos", {
-            method: "POST",
-            body: videoFormData,
-          });
-          
-          if (!videoRes.ok) {
-            console.error("视频上传失败:", video.name);
-          }
-        }
-      }
+        setUploadingVideos(true);
+        setLoading(false);
 
-      router.push(`/events/${data.event.id}`);
+        const smallVideos = videos.filter((v) => v.size < SMALL_VIDEO_THRESHOLD);
+        const largeVideos = videos.filter((v) => v.size >= SMALL_VIDEO_THRESHOLD);
+
+        if (smallVideos.length > 0) {
+          await Promise.all(
+            smallVideos.map((video) => uploadVideoWithProgress(video, eventId, video.id))
+          );
+        }
+
+        for (const video of largeVideos) {
+          await uploadVideoWithProgress(video, eventId, video.id);
+        }
+
+        const checkAllCompleted = () => {
+          const allCompleted = videos.every(
+            (v) => v.status === "completed" || v.status === "error"
+          );
+          if (allCompleted) {
+            setUploadingVideos(false);
+            const hasError = videos.some((v) => v.status === "error");
+            if (!hasError) {
+              router.push(`/events/${eventId}`);
+            }
+          } else {
+            setTimeout(checkAllCompleted, 500);
+          }
+        };
+
+        setTimeout(checkAllCompleted, 500);
+      } else {
+        router.push(`/events/${eventId}`);
+      }
     } catch {
       setError("创建失败，请稍后重试");
       setLoading(false);
+      setUploadingVideos(false);
     }
   };
 
@@ -247,15 +375,20 @@ export default function CreateEventPage() {
               <div className="flex items-center gap-4">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || uploadingVideos}
                   className="btn-primary"
                 >
-                  {loading ? "提交中..." : "提交"}
+                  {loading
+                    ? "提交中..."
+                    : uploadingVideos
+                    ? "视频上传中..."
+                    : "提交"}
                 </button>
                 <button
                   type="button"
                   onClick={() => router.back()}
                   className="btn-secondary"
+                  disabled={uploadingVideos}
                 >
                   取消
                 </button>

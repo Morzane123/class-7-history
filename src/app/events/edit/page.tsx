@@ -14,16 +14,6 @@ interface Section {
   description: string | null;
 }
 
-interface Event {
-  id: string;
-  section_id: string;
-  title: string;
-  content: string;
-  event_date: string;
-  images?: { id: string; image_path: string }[];
-  videos?: { id: string; video_path: string }[];
-}
-
 interface UploadedImage {
   id: string;
   file: File;
@@ -36,19 +26,25 @@ interface UploadedVideo {
   preview: string;
   name: string;
   size: number;
+  progress?: number;
+  status?: "pending" | "uploading" | "compressing" | "completed" | "error";
+  message?: string;
 }
+
+const SMALL_VIDEO_THRESHOLD = 50 * 1024 * 1024;
 
 function EditEventContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const eventId = searchParams.get("id");
-  
+
   const [sections, setSections] = useState<Section[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [existingImages, setExistingImages] = useState<{ id: string; image_path: string }[]>([]);
   const [existingVideos, setExistingVideos] = useState<{ id: string; video_path: string }[]>([]);
+  const [uploadingVideos, setUploadingVideos] = useState(false);
 
   const [formData, setFormData] = useState({
     section_id: "",
@@ -76,9 +72,9 @@ function EditEventContent() {
           router.push("/auth/login");
           return;
         }
-        
+
         setSections(sectionsData.sections || []);
-        
+
         if (eventData && eventData.event) {
           const event = eventData.event;
           setFormData({
@@ -100,7 +96,7 @@ function EditEventContent() {
       const res = await fetch(`/api/events/images/${imageId}`, {
         method: "DELETE",
       });
-      
+
       if (res.ok) {
         setExistingImages(existingImages.filter((img) => img.id !== imageId));
       }
@@ -114,7 +110,7 @@ function EditEventContent() {
       const res = await fetch(`/api/events/videos/${videoId}`, {
         method: "DELETE",
       });
-      
+
       if (res.ok) {
         setExistingVideos(existingVideos.filter((vid) => vid.id !== videoId));
       }
@@ -123,10 +119,110 @@ function EditEventContent() {
     }
   };
 
+  const uploadVideoWithProgress = async (
+    video: UploadedVideo,
+    vidId: string
+  ): Promise<boolean> => {
+    const videoFormData = new FormData();
+    videoFormData.append("video", video.file);
+    videoFormData.append("eventId", eventId!);
+
+    setNewVideos((prev) =>
+      prev.map((v) =>
+        v.id === vidId ? { ...v, status: "uploading" as const, message: "上传中..." } : v
+      )
+    );
+
+    try {
+      const videoRes = await fetch("/api/events/videos", {
+        method: "POST",
+        body: videoFormData,
+      });
+
+      const videoData = await videoRes.json();
+
+      if (!videoRes.ok) {
+        setNewVideos((prev) =>
+          prev.map((v) =>
+            v.id === vidId
+              ? { ...v, status: "error" as const, message: videoData.error || "上传失败" }
+              : v
+          )
+        );
+        return false;
+      }
+
+      if (videoData.progressId) {
+        const pollProgress = async () => {
+          const progressRes = await fetch(
+            `/api/events/videos/progress?id=${videoData.progressId}`
+          );
+          const progressData = await progressRes.json();
+
+          if (progressData.progress) {
+            setNewVideos((prev) =>
+              prev.map((v) =>
+                v.id === vidId
+                  ? {
+                      ...v,
+                      status: progressData.progress.status,
+                      progress: progressData.progress.progress,
+                      message: progressData.progress.message,
+                    }
+                  : v
+              )
+            );
+
+            if (
+              progressData.progress.status === "compressing" ||
+              progressData.progress.status === "uploading"
+            ) {
+              setTimeout(pollProgress, 500);
+            } else if (progressData.progress.status === "completed") {
+              setNewVideos((prev) =>
+                prev.map((v) =>
+                  v.id === vidId
+                    ? { ...v, status: "completed" as const, message: "上传完成" }
+                    : v
+                )
+              );
+            } else if (progressData.progress.status === "error") {
+              setNewVideos((prev) =>
+                prev.map((v) =>
+                  v.id === vidId
+                    ? { ...v, status: "error" as const, message: progressData.progress.error || "上传失败" }
+                    : v
+                )
+              );
+            }
+          }
+        };
+
+        pollProgress();
+      } else {
+        setNewVideos((prev) =>
+          prev.map((v) =>
+            v.id === vidId ? { ...v, status: "completed" as const } : v
+          )
+        );
+      }
+
+      return true;
+    } catch {
+      setNewVideos((prev) =>
+        prev.map((v) =>
+          v.id === vidId ? { ...v, status: "error" as const, message: "上传失败" } : v
+        )
+      );
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSaving(true);
+    setUploadingVideos(false);
 
     try {
       const res = await fetch(`/api/events/${eventId}`, {
@@ -147,28 +243,53 @@ function EditEventContent() {
         const imgFormData = new FormData();
         imgFormData.append("image", image.file);
         imgFormData.append("eventId", eventId!);
-        
+
         await fetch("/api/events/images", {
           method: "POST",
           body: imgFormData,
         });
       }
 
-      for (const video of newVideos) {
-        const videoFormData = new FormData();
-        videoFormData.append("video", video.file);
-        videoFormData.append("eventId", eventId!);
-        
-        await fetch("/api/events/videos", {
-          method: "POST",
-          body: videoFormData,
-        });
-      }
+      if (newVideos.length > 0) {
+        setUploadingVideos(true);
+        setSaving(false);
 
-      router.push(`/events/${eventId}`);
+        const smallVideos = newVideos.filter((v) => v.size < SMALL_VIDEO_THRESHOLD);
+        const largeVideos = newVideos.filter((v) => v.size >= SMALL_VIDEO_THRESHOLD);
+
+        if (smallVideos.length > 0) {
+          await Promise.all(
+            smallVideos.map((video) => uploadVideoWithProgress(video, video.id))
+          );
+        }
+
+        for (const video of largeVideos) {
+          await uploadVideoWithProgress(video, video.id);
+        }
+
+        const checkAllCompleted = () => {
+          const allCompleted = newVideos.every(
+            (v) => v.status === "completed" || v.status === "error"
+          );
+          if (allCompleted) {
+            setUploadingVideos(false);
+            const hasError = newVideos.some((v) => v.status === "error");
+            if (!hasError) {
+              router.push(`/events/${eventId}`);
+            }
+          } else {
+            setTimeout(checkAllCompleted, 500);
+          }
+        };
+
+        setTimeout(checkAllCompleted, 500);
+      } else {
+        router.push(`/events/${eventId}`);
+      }
     } catch {
       setError("更新失败，请稍后重试");
       setSaving(false);
+      setUploadingVideos(false);
     }
   };
 
@@ -325,15 +446,20 @@ function EditEventContent() {
       <div className="flex items-center gap-4">
         <button
           type="submit"
-          disabled={saving}
+          disabled={saving || uploadingVideos}
           className="btn-primary"
         >
-          {saving ? "保存中..." : "保存修改"}
+          {saving
+            ? "保存中..."
+            : uploadingVideos
+            ? "视频上传中..."
+            : "保存修改"}
         </button>
         <button
           type="button"
           onClick={() => router.back()}
           className="btn-secondary"
+          disabled={uploadingVideos}
         >
           取消
         </button>
