@@ -6,6 +6,9 @@ import { getDb } from "@/lib/db";
 import { getCurrentUser } from "@/lib/auth";
 import { compressVideo, getVideoMetadata } from "@/lib/videoCompress";
 
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
 export async function POST(request: NextRequest) {
   console.log("[VideoUpload] Starting video upload...");
   

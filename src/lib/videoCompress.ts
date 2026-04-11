@@ -37,7 +37,7 @@ export async function compressVideo(
       .setFfprobePath(ffprobePath)
       .output(outputPath)
       .videoCodec("libx264")
-      .size("1920x?")
+      .videoFilters("scale=1920:-2")
       .outputOptions([
         "-crf 28",
         "-preset medium",
@@ -49,7 +49,9 @@ export async function compressVideo(
         console.log(`[VideoCompress] FFmpeg command: ${commandLine}`);
       })
       .on("progress", (progress) => {
-        console.log(`[VideoCompress] Progress: ${Math.round(progress.percent || 0)}%`);
+        if (progress.percent) {
+          console.log(`[VideoCompress] Progress: ${Math.round(progress.percent)}%`);
+        }
       })
       .on("end", async () => {
         try {
@@ -75,7 +77,7 @@ export async function compressVideo(
                 .setFfprobePath(ffprobePath)
                 .output(outputPath)
                 .videoCodec("libx264")
-                .size("1280x?")
+                .videoFilters("scale=1280:-2")
                 .outputOptions([
                   `-b:v ${bitrate}k`,
                   "-preset medium",
@@ -127,7 +129,7 @@ async function getVideoDuration(videoPath: string): Promise<number> {
         console.error(`[VideoCompress] FFprobe error:`, err);
         reject(err);
       }
-      else resolve(metadata.format.duration || 0);
+      else resolve(metadata.format.duration || 1);
     });
   });
 }
