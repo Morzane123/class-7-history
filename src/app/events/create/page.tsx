@@ -6,6 +6,7 @@ import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
 import RichTextEditor from "./RichTextEditor";
 import ImageUploader from "./ImageUploader";
+import VideoUploader from "./VideoUploader";
 
 interface Section {
   id: string;
@@ -17,6 +18,14 @@ interface UploadedImage {
   id: string;
   file: File;
   preview: string;
+}
+
+interface UploadedVideo {
+  id: string;
+  file: File;
+  preview: string;
+  name: string;
+  size: number;
 }
 
 export default function CreateEventPage() {
@@ -34,6 +43,7 @@ export default function CreateEventPage() {
   });
 
   const [images, setImages] = useState<UploadedImage[]>([]);
+  const [videos, setVideos] = useState<UploadedVideo[]>([]);
 
   useEffect(() => {
     Promise.all([
@@ -90,6 +100,23 @@ export default function CreateEventPage() {
             method: "POST",
             body: imgFormData,
           });
+        }
+      }
+
+      if (videos.length > 0) {
+        for (const video of videos) {
+          const videoFormData = new FormData();
+          videoFormData.append("video", video.file);
+          videoFormData.append("eventId", data.event.id);
+          
+          const videoRes = await fetch("/api/events/videos", {
+            method: "POST",
+            body: videoFormData,
+          });
+          
+          if (!videoRes.ok) {
+            console.error("视频上传失败:", video.name);
+          }
         }
       }
 
@@ -206,6 +233,13 @@ export default function CreateEventPage() {
                       上传图片
                     </label>
                     <ImageUploader images={images} setImages={setImages} />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+                      上传视频
+                    </label>
+                    <VideoUploader videos={videos} setVideos={setVideos} />
                   </div>
                 </div>
               </div>

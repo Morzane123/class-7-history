@@ -16,6 +16,25 @@ export async function GET() {
     } else {
       migrations.push("approved: 已存在");
     }
+
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table'").all() as { name: string }[];
+    const tableNames = tables.map(t => t.name);
+
+    if (!tableNames.includes("event_videos")) {
+      db.exec(`
+        CREATE TABLE event_videos (
+          id TEXT PRIMARY KEY,
+          event_id TEXT NOT NULL,
+          video_path TEXT NOT NULL,
+          sort_order INTEGER DEFAULT 0,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+        )
+      `);
+      migrations.push("event_videos表: 已添加");
+    } else {
+      migrations.push("event_videos表: 已存在");
+    }
     
     return NextResponse.json({ 
       message: "数据库迁移成功",

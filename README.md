@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ![Status](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square)
-![Version](https://img.shields.io/badge/Version-v1.5.0-orange?style=flat-square)
+![Version](https://img.shields.io/badge/Version-v1.6.0-orange?style=flat-square)
 
 ## 项目简介
 
@@ -21,6 +21,8 @@
 - **后端**: Next.js API Routes
 - **数据库**: SQLite
 - **认证**: JWT
+- **图片处理**: sharp
+- **视频处理**: fluent-ffmpeg
 
 ## 功能特性
 
@@ -32,7 +34,9 @@
 - 事件记录（时间线展示）
 - 富文本编辑器
 - 多级评论系统
-- 头像上传（默认头像支持）
+- 头像上传（自动压缩）
+- 图片上传（自动压缩转WebP）
+- 视频上传（自动压缩至50MB）
 - 移动端响应式设计
 - Apple风格毛玻璃界面
 - 登录验证机制（保护内容隐私）
@@ -55,6 +59,7 @@
 | v1.4.0 | - | 修复图片上传问题、删除用户问题，添加身份验证系统 | 2026-04-05 |
 | v1.5.0 | - | 添加用户审核、登录验证、使用条例、网站公告 | 2026-04-05 |
 | v1.5.1 | - | 添加审核结果邮件通知，修复红点位置 | 2026-04-05 |
+| v1.6.0 | - | 添加图片压缩、视频上传与压缩功能 | 2026-04-05 |
 
 ## 开发
 

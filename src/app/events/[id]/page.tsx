@@ -7,6 +7,7 @@ import Sidebar from "@/components/Sidebar";
 import { getEventById, getSections, getCommentsByEventId } from "@/lib/db";
 import EventActions from "./EventActions";
 import EventImages from "./EventImages";
+import EventVideos from "./EventVideos";
 import CommentSection from "./CommentSection";
 import RichTextDisplay from "./RichTextDisplay";
 
@@ -100,6 +101,8 @@ export default async function EventDetailPage({ params }: EventDetailPageProps) 
             <EventActions event={event} />
 
             <EventImages event={event} />
+
+            <EventVideos eventId={id} />
 
             <div className="card mb-8">
               <RichTextDisplay content={event.content} />
