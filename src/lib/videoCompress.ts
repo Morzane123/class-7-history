@@ -2,6 +2,12 @@ import ffmpeg from "fluent-ffmpeg";
 import { join } from "path";
 import { mkdir, unlink, stat } from "fs/promises";
 
+const ffmpegPath = process.env.FFMPEG_PATH || "/usr/bin/ffmpeg";
+const ffprobePath = process.env.FFPROBE_PATH || "/usr/bin/ffprobe";
+
+ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfprobePath(ffprobePath);
+
 export interface VideoCompressResult {
   path: string;
   originalSize: number;
@@ -23,8 +29,12 @@ export async function compressVideo(
 
   const outputPath = join(outputDir, `${filename}.mp4`);
 
+  console.log(`[VideoCompress] Starting compression: ${inputPath} -> ${outputPath}`);
+
   return new Promise((resolve, reject) => {
     ffmpeg(inputPath)
+      .setFfmpegPath(ffmpegPath)
+      .setFfprobePath(ffprobePath)
       .output(outputPath)
       .videoCodec("libx264")
       .size("1920x?")
@@ -35,8 +45,16 @@ export async function compressVideo(
         "-maxrate 5M",
         "-bufsize 10M",
       ])
+      .on("start", (commandLine) => {
+        console.log(`[VideoCompress] FFmpeg command: ${commandLine}`);
+      })
+      .on("progress", (progress) => {
+        console.log(`[VideoCompress] Progress: ${Math.round(progress.percent || 0)}%`);
+      })
       .on("end", async () => {
         try {
+          console.log(`[VideoCompress] Compression finished, checking file size...`);
+          
           const inputStats = await stat(inputPath);
           const outputStats = await stat(outputPath);
 
@@ -44,12 +62,17 @@ export async function compressVideo(
           let finalSize = outputStats.size;
 
           if (finalSize > maxSizeMB * 1024 * 1024) {
-            const bitrate = Math.floor((maxSizeMB * 8 * 1024) / await getVideoDuration(inputPath));
+            console.log(`[VideoCompress] File too large (${(finalSize / 1024 / 1024).toFixed(2)}MB), re-encoding...`);
+            
+            const duration = await getVideoDuration(inputPath);
+            const bitrate = Math.floor((maxSizeMB * 8 * 1024) / duration);
             
             await unlink(outputPath);
             
             await new Promise<void>((res, rej) => {
               ffmpeg(inputPath)
+                .setFfmpegPath(ffmpegPath)
+                .setFfprobePath(ffprobePath)
                 .output(outputPath)
                 .videoCodec("libx264")
                 .size("1280x?")
@@ -58,8 +81,14 @@ export async function compressVideo(
                   "-preset medium",
                   "-movflags +faststart",
                 ])
-                .on("end", () => res())
-                .on("error", rej)
+                .on("end", () => {
+                  console.log(`[VideoCompress] Re-encoding finished`);
+                  res();
+                })
+                .on("error", (err) => {
+                  console.error(`[VideoCompress] Re-encoding error:`, err);
+                  rej(err);
+                })
                 .run();
             });
 
@@ -69,6 +98,8 @@ export async function compressVideo(
 
           const duration = await getVideoDuration(outputPath);
 
+          console.log(`[VideoCompress] Success! Original: ${(inputStats.size / 1024 / 1024).toFixed(2)}MB, Compressed: ${(finalSize / 1024 / 1024).toFixed(2)}MB`);
+
           resolve({
             path: finalPath,
             originalSize: inputStats.size,
@@ -76,18 +107,26 @@ export async function compressVideo(
             duration,
           });
         } catch (error) {
+          console.error(`[VideoCompress] Post-processing error:`, error);
           reject(error);
         }
       })
-      .on("error", reject)
+      .on("error", (err) => {
+        console.error(`[VideoCompress] FFmpeg error:`, err);
+        reject(err);
+      })
       .run();
   });
 }
 
 async function getVideoDuration(videoPath: string): Promise<number> {
   return new Promise((resolve, reject) => {
+    ffmpeg.setFfprobePath(ffprobePath);
     ffmpeg.ffprobe(videoPath, (err, metadata) => {
-      if (err) reject(err);
+      if (err) {
+        console.error(`[VideoCompress] FFprobe error:`, err);
+        reject(err);
+      }
       else resolve(metadata.format.duration || 0);
     });
   });
@@ -100,8 +139,12 @@ export async function getVideoMetadata(videoPath: string): Promise<{
   size: number;
 }> {
   return new Promise((resolve, reject) => {
+    ffmpeg.setFfprobePath(ffprobePath);
     ffmpeg.ffprobe(videoPath, (err, metadata) => {
-      if (err) reject(err);
+      if (err) {
+        console.error(`[VideoCompress] FFprobe metadata error:`, err);
+        reject(err);
+      }
       else {
         const videoStream = metadata.streams.find((s) => s.codec_type === "video");
         resolve({

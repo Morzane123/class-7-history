@@ -24,6 +24,10 @@ export async function GET(
       png: "image/png",
       gif: "image/gif",
       webp: "image/webp",
+      mp4: "video/mp4",
+      webm: "video/webm",
+      mov: "video/quicktime",
+      avi: "video/x-msvideo",
     };
 
     const contentType = contentTypes[ext || ""] || "application/octet-stream";
@@ -32,6 +36,7 @@ export async function GET(
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "public, max-age=31536000",
+        "Accept-Ranges": "bytes",
       },
     });
   } catch (error) {
