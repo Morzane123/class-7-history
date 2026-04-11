@@ -42,9 +42,11 @@ export function deleteProgress(id: string): void {
 
 export function cleanOldProgress(maxAgeMs: number = 3600000): void {
   const now = Date.now();
-  for (const [id, progress] of progressStore.entries()) {
+  const keysToDelete: string[] = [];
+  progressStore.forEach((progress, id) => {
     if (now - progress.startTime > maxAgeMs) {
-      progressStore.delete(id);
+      keysToDelete.push(id);
     }
-  }
+  });
+  keysToDelete.forEach((id) => progressStore.delete(id));
 }
