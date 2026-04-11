@@ -140,12 +140,20 @@ export interface Event {
   author?: User;
   section?: Section;
   images?: EventImage[];
+  videos?: EventVideo[];
 }
 
 export interface EventImage {
   id: string;
   event_id: string;
   image_path: string;
+  sort_order: number;
+}
+
+export interface EventVideo {
+  id: string;
+  event_id: string;
+  video_path: string;
   sort_order: number;
 }
 
@@ -233,6 +241,7 @@ export async function getEventById(id: string): Promise<Event | null> {
   if (!event) return null;
 
   const images = db.prepare("SELECT * FROM event_images WHERE event_id = ? ORDER BY sort_order").all(id) as EventImage[];
+  const videos = db.prepare("SELECT * FROM event_videos WHERE event_id = ? ORDER BY sort_order").all(id) as EventVideo[];
 
   return {
     ...(event as Event & { author_name: string; author_avatar: string | null; section_name: string }),
@@ -246,6 +255,7 @@ export async function getEventById(id: string): Promise<Event | null> {
       name: (event as any).section_name,
     } as Section,
     images,
+    videos,
   };
 }
 

@@ -6,6 +6,7 @@ import Navigation from "@/components/Navigation";
 import Sidebar from "@/components/Sidebar";
 import RichTextEditor from "../create/RichTextEditor";
 import ImageUploader from "../create/ImageUploader";
+import VideoUploader from "../create/VideoUploader";
 
 interface Section {
   id: string;
@@ -20,12 +21,21 @@ interface Event {
   content: string;
   event_date: string;
   images?: { id: string; image_path: string }[];
+  videos?: { id: string; video_path: string }[];
 }
 
 interface UploadedImage {
   id: string;
   file: File;
   preview: string;
+}
+
+interface UploadedVideo {
+  id: string;
+  file: File;
+  preview: string;
+  name: string;
+  size: number;
 }
 
 function EditEventContent() {
@@ -38,6 +48,7 @@ function EditEventContent() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [existingImages, setExistingImages] = useState<{ id: string; image_path: string }[]>([]);
+  const [existingVideos, setExistingVideos] = useState<{ id: string; video_path: string }[]>([]);
 
   const [formData, setFormData] = useState({
     section_id: "",
@@ -47,6 +58,7 @@ function EditEventContent() {
   });
 
   const [newImages, setNewImages] = useState<UploadedImage[]>([]);
+  const [newVideos, setNewVideos] = useState<UploadedVideo[]>([]);
 
   useEffect(() => {
     if (!eventId) {
@@ -76,6 +88,7 @@ function EditEventContent() {
             event_date: event.event_date.split("T")[0],
           });
           setExistingImages(event.images || []);
+          setExistingVideos(event.videos || []);
         }
       })
       .catch(() => router.push("/events"))
@@ -93,6 +106,20 @@ function EditEventContent() {
       }
     } catch {
       alert("删除图片失败");
+    }
+  };
+
+  const handleDeleteExistingVideo = async (videoId: string) => {
+    try {
+      const res = await fetch(`/api/events/videos/${videoId}`, {
+        method: "DELETE",
+      });
+      
+      if (res.ok) {
+        setExistingVideos(existingVideos.filter((vid) => vid.id !== videoId));
+      }
+    } catch {
+      alert("删除视频失败");
     }
   };
 
@@ -124,6 +151,17 @@ function EditEventContent() {
         await fetch("/api/events/images", {
           method: "POST",
           body: imgFormData,
+        });
+      }
+
+      for (const video of newVideos) {
+        const videoFormData = new FormData();
+        videoFormData.append("video", video.file);
+        videoFormData.append("eventId", eventId!);
+        
+        await fetch("/api/events/videos", {
+          method: "POST",
+          body: videoFormData,
         });
       }
 
@@ -243,6 +281,43 @@ function EditEventContent() {
               添加新图片
             </label>
             <ImageUploader images={newImages} setImages={setNewImages} />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+              已有视频
+            </label>
+            {existingVideos.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                {existingVideos.map((video) => (
+                  <div key={video.id} className="relative group bg-[#f5f5f7] rounded-xl overflow-hidden">
+                    <video
+                      src={video.video_path}
+                      className="w-full h-32 object-cover"
+                      controls
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteExistingVideo(video.id)}
+                      className="absolute top-2 right-2 w-6 h-6 bg-[#ff3b30] text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[#86868b] text-sm mb-4">暂无视频</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-[#1d1d1f] mb-2">
+              添加新视频
+            </label>
+            <VideoUploader videos={newVideos} setVideos={setNewVideos} />
           </div>
         </div>
       </div>
