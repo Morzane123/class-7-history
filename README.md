@@ -13,7 +13,7 @@
 
 这是一个班级历史记录系统，类似于Wiki的形式记录班级的点点滴滴。系统采用现代化的Apple风格设计，支持富文本编辑、图片视频上传、多级评论等功能。
 
-**在线地址**: [class-7-history.xuanjian.top](https://class-7-history.xuanjian.top)
+- **在线地址**: [class7.xuanjian.top](https://class7.xuanjian.top)
 
 ## 技术栈
 

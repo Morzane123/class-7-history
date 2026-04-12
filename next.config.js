@@ -11,7 +11,7 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ["better-sqlite3"],
     serverActions: {
-      allowedOrigins: ["class-7-history.xuanjian.top", "*.xuanjian.top", "dxxs3.com", "*.dxxs3.com"],
+      allowedOrigins: ["class7.xuanjian.top", "*.xuanjian.top", "dxxs3.com", "*.dxxs3.com"],
     },
   },
 };
