@@ -7,7 +7,7 @@
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
 
 ![Status](https://img.shields.io/badge/Status-Online-brightgreen?style=flat-square)
-![Version](https://img.shields.io/badge/Version-v1.6.2-orange?style=flat-square)
+![Version](https://img.shields.io/badge/Version-v1.7.0-orange?style=flat-square)
 
 ## 项目简介
 
@@ -66,6 +66,15 @@
 - 网站公告弹窗
 - 登录验证机制（保护内容隐私）
 
+### 性能优化
+
+- 图片/视频懒加载（IntersectionObserver）
+- 骨架屏加载状态
+- 数据库索引优化
+- 分页加载（每页10条）
+- 全屏图片查看器
+- 全屏视频播放器
+
 ## 项目结构
 
 ```
@@ -93,9 +102,14 @@ class-7-history/
 │   │   ├── Avatar.tsx          # 头像组件
 │   │   ├── ClientLayout.tsx    # 客户端布局
 │   │   ├── HomeBackground.tsx  # 背景轮播
+│   │   ├── ImageViewer.tsx     # 图片查看器
 │   │   ├── LayoutClient.tsx    # 布局客户端组件
+│   │   ├── LazyLoad.tsx        # 懒加载组件
 │   │   ├── Navigation.tsx      # 导航栏
-│   │   └── Sidebar.tsx         # 侧边栏
+│   │   ├── Sidebar.tsx         # 侧边栏
+│   │   ├── Skeleton.tsx        # 骨架屏组件
+│   │   ├── TimelineClient.tsx  # 时间线客户端组件
+│   │   └── VideoPlayer.tsx     # 视频播放器
 │   └── lib/                    # 工具库
 │       ├── auth.ts             # 认证工具
 │       ├── db.ts               # 数据库操作
@@ -231,6 +245,7 @@ class-7-history/
 | v1.6.0 | d95ac9b | 添加图片压缩、视频上传与压缩功能         | 2026-04-05 |
 | v1.6.1 | 43a74f3 | 视频流式传输、编辑页面视频功能          | 2026-04-11 |
 | v1.6.2 | -       | 视频压缩进度反馈、并行上传、硬件优化        | 2026-04-11 |
+| v1.7.0 | -       | 性能优化：懒加载、骨架屏、索引、分页、播放器 | 2026-04-12 |
 
 ## 开发指南
 

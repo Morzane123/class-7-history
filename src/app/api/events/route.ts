@@ -9,10 +9,10 @@ export async function GET(request: NextRequest) {
     const sectionId = searchParams.get("section") || undefined;
     const year = searchParams.get("year") ? parseInt(searchParams.get("year")!) : undefined;
     const month = searchParams.get("month") ? parseInt(searchParams.get("month")!) : undefined;
-    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : undefined;
-    const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : undefined;
+    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")!) : 10;
+    const offset = searchParams.get("offset") ? parseInt(searchParams.get("offset")!) : 0;
 
-    const events = await getEvents({
+    const { events, total } = await getEvents({
       sectionId,
       year,
       month,
@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
       offset,
     });
 
-    return NextResponse.json({ events });
+    return NextResponse.json({ events, total, limit, offset });
   } catch (error) {
     console.error("Get events error:", error);
     return NextResponse.json(

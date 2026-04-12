@@ -2,8 +2,9 @@ import { cookies } from "next/headers";
 import { verify } from "jsonwebtoken";
 import Navigation from "@/components/Navigation";
 import LayoutClient from "@/components/LayoutClient";
-import { getSections, getEvents } from "@/lib/db";
+import { getSections } from "@/lib/db";
 import Link from "next/link";
+import TimelineClient from "@/components/TimelineClient";
 
 const JWT_SECRET = process.env.JWT_SECRET || "class-7-history-secret-key-2027";
 
@@ -16,7 +17,7 @@ export default async function TimelinePage({
 }) {
   const cookieStore = await cookies();
   const token = cookieStore.get("auth_token")?.value;
-  
+
   let isLoggedIn = false;
   if (token) {
     try {
@@ -29,30 +30,6 @@ export default async function TimelinePage({
 
   const params = await searchParams;
   const sections = await getSections();
-  const events = await getEvents({
-    sectionId: params.section,
-    year: params.year ? parseInt(params.year) : undefined,
-    month: params.month ? parseInt(params.month) : undefined,
-  });
-
-  const groupedEvents = events.reduce((acc, event) => {
-    const date = new Date(event.event_date);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-    const key = `${year}-${month.toString().padStart(2, "0")}`;
-    
-    if (!acc[key]) {
-      acc[key] = {
-        year,
-        month,
-        events: [],
-      };
-    }
-    acc[key].events.push(event);
-    return acc;
-  }, {} as Record<string, { year: number; month: number; events: typeof events }>);
-
-  const sortedKeys = Object.keys(groupedEvents).sort((a, b) => b.localeCompare(a));
 
   if (!isLoggedIn) {
     return (
@@ -86,54 +63,11 @@ export default async function TimelinePage({
               时间线
             </h1>
 
-            {sortedKeys.length === 0 ? (
-              <div className="text-center py-20">
-                <p className="text-[#6e6e73]">暂无事件记录</p>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                {sortedKeys.map((key) => {
-                  const group = groupedEvents[key];
-                  return (
-                    <div key={key}>
-                      <h2 className="text-xl font-semibold text-[#1d1d1f] mb-4">
-                        {group.year}年{group.month}月
-                      </h2>
-                      <div className="space-y-4">
-                        {group.events.map((event) => (
-                          <Link
-                            key={event.id}
-                            href={`/events/${event.id}`}
-                            className="block bg-white rounded-2xl p-6 shadow-[rgba(0,0,0,0.08)_0px_2px_8px] hover:shadow-[rgba(0,0,0,0.12)_0px_4px_16px] transition-shadow"
-                          >
-                            <div className="flex items-start gap-4">
-                              <div className="flex-shrink-0 w-12 h-12 bg-[#0071e3]/10 rounded-xl flex items-center justify-center">
-                                <span className="text-[#0071e3] font-semibold">
-                                  {new Date(event.event_date).getDate()}
-                                </span>
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-lg font-medium text-[#1d1d1f] mb-1">
-                                  {event.title}
-                                </h3>
-                                <p className="text-sm text-[#6e6e73] line-clamp-2">
-                                  {event.content.replace(/<[^>]*>/g, "")}
-                                </p>
-                                {event.section && (
-                                  <span className="inline-block mt-2 px-3 py-1 bg-[#f5f5f7] rounded-full text-xs text-[#6e6e73]">
-                                    {event.section.name}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </Link>
-                        ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
+            <TimelineClient
+              sectionId={params.section}
+              year={params.year ? parseInt(params.year) : undefined}
+              month={params.month ? parseInt(params.month) : undefined}
+            />
           </div>
         </LayoutClient>
       </div>

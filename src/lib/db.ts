@@ -174,8 +174,13 @@ export async function getEvents(options?: {
   month?: number;
   limit?: number;
   offset?: number;
-}): Promise<Event[]> {
+}): Promise<{ events: Event[]; total: number }> {
   const db = getDb();
+  let countSql = `
+    SELECT COUNT(*) as count
+    FROM events e
+    WHERE 1=1
+  `;
   let sql = `
     SELECT e.*, u.nickname as author_name, u.avatar as author_avatar, s.name as section_name
     FROM events e
@@ -184,21 +189,31 @@ export async function getEvents(options?: {
     WHERE 1=1
   `;
   const params: (string | number)[] = [];
+  const countParams: (string | number)[] = [];
 
   if (options?.sectionId) {
     sql += " AND e.section_id = ?";
+    countSql += " AND e.section_id = ?";
     params.push(options.sectionId);
+    countParams.push(options.sectionId);
   }
 
   if (options?.year) {
     sql += " AND strftime('%Y', e.event_date) = ?";
+    countSql += " AND strftime('%Y', e.event_date) = ?";
     params.push(options.year.toString());
+    countParams.push(options.year.toString());
   }
 
   if (options?.month) {
     sql += " AND strftime('%m', e.event_date) = ?";
+    countSql += " AND strftime('%m', e.event_date) = ?";
     params.push(options.month.toString().padStart(2, "0"));
+    countParams.push(options.month.toString().padStart(2, "0"));
   }
+
+  const countResult = db.prepare(countSql).get(...countParams) as { count: number };
+  const total = countResult.count;
 
   sql += " ORDER BY e.event_date DESC";
 
@@ -214,18 +229,21 @@ export async function getEvents(options?: {
 
   const events = db.prepare(sql).all(...params) as (Event & { author_name: string; author_avatar: string | null; section_name: string })[];
 
-  return events.map((e) => ({
-    ...e,
-    author: {
-      id: e.author_id,
-      nickname: e.author_name,
-      avatar: e.author_avatar,
-    } as User,
-    section: {
-      id: e.section_id,
-      name: e.section_name,
-    } as Section,
-  }));
+  return {
+    events: events.map((e) => ({
+      ...e,
+      author: {
+        id: e.author_id,
+        nickname: e.author_name,
+        avatar: e.author_avatar,
+      } as User,
+      section: {
+        id: e.section_id,
+        name: e.section_name,
+      } as Section,
+    })),
+    total,
+  };
 }
 
 export async function getEventById(id: string): Promise<Event | null> {
