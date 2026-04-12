@@ -6,7 +6,7 @@ export const dynamic = "force-dynamic";
 
 export default async function EventsPage() {
   const sections = await getSections();
-  const events = await getEvents({ limit: 50 });
+  const { events } = await getEvents({ limit: 50 });
 
   return (
     <div className="min-h-screen bg-[#f5f5f7]">
