@@ -45,7 +45,7 @@ export async function GET() {
       { name: "idx_events_date", table: "events", column: "event_date" },
       { name: "idx_comments_event", table: "comments", column: "event_id" },
       { name: "idx_comments_parent", table: "comments", column: "parent_id" },
-      { name: "idx_comments_author", table: "comments", column: "author_id" },
+      { name: "idx_comments_user", table: "comments", column: "user_id" },
       { name: "idx_images_event", table: "event_images", column: "event_id" },
       { name: "idx_videos_event", table: "event_videos", column: "event_id" },
     ];
